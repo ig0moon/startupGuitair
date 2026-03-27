@@ -17,7 +17,7 @@
 
         <div class="navbar">
             <ul>
-                <li><button onclick="document.location='home.php'"><span class="material-symbols-outlined">home</span></button></li>
+                <li><button onclick="document.location='index.php'"><span class="material-symbols-outlined">home</span></button></li>
                 <li><button onclick="document.location='prod.php'"><span class="material-symbols-outlined">lists</span></button></li>
                 <li><button onclick="document.location='about.php'"><span class="material-symbols-outlined">info</span></button></li>
                 <li><button onclick="document.location='help.php'"><span class="material-symbols-outlined">help</span></button></li>
