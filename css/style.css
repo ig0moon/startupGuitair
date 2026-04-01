@@ -68,12 +68,29 @@ header {
     cursor: pointer;
 }
 
-/* ----- CORPO ----- */
 
-.container {
+
+/* ----- CORPO INDEX ----- */
+
+.banner {
+    display: flex;
+    max-width: 90%;
+    height: auto;
+    margin: 40px auto;
+    padding: 0 10px;
+    gap: 10px;
+}
+
+.banner img {
+    width: 50%;
+    height: auto;
     margin: auto;
-    text-align: center;
-    width: 90%;
-    height: 1000px;
-    background-color: black;
+    object-fit: cover;
+    border-radius: 20px;
+}
+
+/* ----- CORPO SOBRE ----- */
+
+.valores ul li {
+    list-style: circle;
 }
