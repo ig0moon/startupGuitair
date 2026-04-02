@@ -69,7 +69,6 @@ header {
 }
 
 
-
 /* ----- CORPO INDEX ----- */
 
 .banner {
@@ -89,8 +88,44 @@ header {
     border-radius: 20px;
 }
 
+
 /* ----- CORPO SOBRE ----- */
 
-.valores ul li {
-    list-style: circle;
+.sobre {
+    background-color: black;
+    margin: auto;
+    width: 80%;
+    height: 400px;
+    display: flex;
+    padding: 20px;
+    border-radius: 20px;
+    margin-top: 10px;
+}
+
+.sobre .abt-bbl {
+    font-family: poppins, arial, sans-serif;
+    border-radius: 20px;
+    text-align: center;
+    width: 30%;
+    height: 350px;
+    margin: auto;
+    font-size: larger;
+    padding: 10px;
+    background: linear-gradient(45deg, rgb(99, 0, 0), #2B1FD3);
+    background-size: 300% 100%;
+    background-position: left;
+    transition: background-position 0.5s ease;
+}
+
+.abt-bbl ul li {
+    list-style: none;
+}
+
+.abt-bbl p {
+    margin: auto;
+    width: 350px;
+}
+
+.abt-bbl:hover {
+    background-position: right;
 }
