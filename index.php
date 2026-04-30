@@ -1,4 +1,5 @@
 <?php
+$pageTitle = 'GuitAIr - Home';
 include 'inc/header.inc.php'; 
 ?>
 

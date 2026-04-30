@@ -6,7 +6,7 @@
     <link rel="icon" href="./img/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=help,home,info,lists,person,shopping_cart"/>
-    <title>GuitAIr</title>
+    <title><?php echo isset($pageTitle)?$pageTitle :"GuitAIr"?></title>
 </head>
 
 <body>
