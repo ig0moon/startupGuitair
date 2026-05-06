@@ -149,37 +149,86 @@ header {
     position: block;
     display: flex;
     margin: auto;
-    padding-top: 90px;
+    padding: 50px;
     border-radius: 20px;
 }
 
+.modelo legend {
+    text-align: center;
+    padding: 10px;
+}
+
+.modelo label {
+    background-color: #13131a;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
 .modelo img {
-    width: 50%;
+    padding: 50px;
+    max-width: 300px;
+    max-height: 300px;
+}
+
+.modelo .texto-instr {
+    font-family: poppins, arial, sans-serif;
+    display: none;
+    margin: auto;
+    width: 60%;
+}
+
+.modelo .texto-instr h1 {
+    text-align: center;
+}
+
+.modelo .texto-instr p {
+    font-size: large;
+    text-align: justify;
+}
+
+.compr-prod input[type="submit"] {
+    border: none;
+    color: white;
+    background-color: red;
+    font-size: 1em;
+    text-transform: uppercase;
+    box-shadow: 0 0 1px 3px rgb(121, 0, 0);
+    padding: 0.5em 1em;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.modelo input:checked + label .texto-instr {
+    display: flex;
+    flex-direction: column;
 }
 
 .modelo label::after {
+    border: 1px solid white;
     position: absolute;
-    top: 30px;
     content: "";
     display: flex;
     box-sizing: border-box;
     border-radius: 50%;
     width: 50px;
     height: 50px;
+    top: 35px;
 }
 
 Label[for="amarelo"]::after {
-    left: 4px;
+    left: 10;
     background-color: yellow;
 }
 
 Label[for="azul"]::after {
-    left: 50%;
+    left: 110px;
     background-color: blue;
 }
 
 Label[for="vermelho"]::after {
-    left: 95.5%;
+    left: 170px;
     background-color: red;
 }
 
