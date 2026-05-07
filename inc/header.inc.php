@@ -25,6 +25,21 @@
                 <li><button onclick="document.location='cart.php'"><span class="material-symbols-outlined">shopping_cart</span></button></li>
             </ul>
         </div>
+
+        <div class="nav-mobile-menu">
+            <script type="text/javascript" src="./js/navbarmobile.js"></script>
+        </div>
+
+    <div class="navbar-mobile">
+        <ul>
+            <li><button onclick="document.location='index.php'">Home</button></li>
+            <li><button onclick="document.location='prod.php'">Produtos</button></li>
+            <li><button onclick="document.location='about.php'">Sobre</button></li>
+            <li><button onclick="document.location='help.php'">Ajuda</button></li>
+            <li><button onclick="document.location='acc.php'">Conta</button></li>
+            <li><button onclick="document.location='cart.php'">Carrinho</button></li>
+        </ul>
+    </div>
     </header>
 
 <div onclick="subirTela()" class="scrlbtn"></div>

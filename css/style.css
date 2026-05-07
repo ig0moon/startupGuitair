@@ -90,6 +90,10 @@ header {
     cursor: pointer;
 }
 
+.navbar-mobile {
+    display: none;
+}
+
 
 /* ----- CORPO INDEX ----- */
 
@@ -334,6 +338,8 @@ Label[for="vermelho"]::after {
 @media (max-width: 1000px) {
 
     /* ----- RESPONSIVO HEADER ----- */
+
+    /* ----- RESPONSIVO ANTIGO
     header {
         display: block;
         height: 200px;
@@ -378,6 +384,107 @@ Label[for="vermelho"]::after {
         width: 50px;
         height: 50px;
         font-size: 30px;
+    }
+    ----- */
+
+    header {
+        display: flex;
+        height: auto;
+        position: sticky;
+        top: 0;
+        z-index: 999;
+    }
+
+    .logo {
+        width: 100%;
+        height: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+    }
+
+    .logo img {
+        padding: 0;
+    }
+
+    .navbar {
+        display: none;
+    }
+
+    .nav-mobile-menu {
+    display: flex;
+    align-items: center;
+    padding: 0 25px;
+    margin-right: auto;
+}
+
+    .hamburger-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+        padding: 8px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .hamburger-btn span {
+        display: block;
+        width: 24px;
+        height: 2px;
+        background-color: white;
+        border-radius: 2px;
+        transition: transform 300ms ease, opacity 300ms ease;
+        transform-origin: center;
+    }
+
+    .hamburger-btn.active span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+    }
+    .hamburger-btn.active span:nth-child(2) {
+        opacity: 0;
+        transform: scaleX(0);
+    }
+    .hamburger-btn.active span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+    }
+
+
+    .navbar-mobile {
+        background-color: #08080a;
+        border-right: 1px solid rgb(58, 58, 58);
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 40%;
+        height: 100svh;
+        z-index: 1000;
+    }
+
+    .navbar-mobile li {
+        width: 100%;
+        height: auto;
+    }
+
+    .navbar-mobile li button {
+        color: white;
+        width: 100%;
+        height: 50px;
+        background-color: transparent;
+        transition: background-color 500ms;
+        border: none;
+        cursor: pointer;
+    }
+
+    .navbar-mobile li button:hover {
+        background-color: rgb(53, 53, 53);
     }
 
     /* ----- RESPONSIVO INDEX ----- */
