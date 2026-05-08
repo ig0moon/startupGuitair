@@ -158,8 +158,10 @@ header {
 }
 
 .modelo legend {
+    font-family: poppins, arial, sans-serif;
     text-align: center;
     padding: 10px;
+    font-size: large;
 }
 
 .modelo label {
@@ -177,6 +179,7 @@ header {
 }
 
 .modelo .texto-instr {
+    border: 1px solid white;
     font-family: poppins, arial, sans-serif;
     display: none;
     margin: auto;
