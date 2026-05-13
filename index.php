@@ -17,7 +17,7 @@ include 'inc/header.inc.php';
     <br>
 
     <div class="div-inst">
-        <form class="instrumentos" method="POST" action="comprar.php">
+        <form class="instrumentos" method="POST" action="buy.php">
             <fieldset class="modelo">
                 <legend>CONHEÇA NOSSOS PRODUTOS</legend>
                 <input class="chkimg" type="radio" name="modelo" value="amarelo" id="amarelo" checked>

@@ -8,6 +8,8 @@
 body {
     color: white;
     background-color: #13131a;
+    width: 100%;
+    height: auto;
 }
 
 .scrlbtn {
@@ -179,7 +181,6 @@ header {
 }
 
 .modelo .texto-instr {
-    border: 1px solid white;
     font-family: poppins, arial, sans-serif;
     display: none;
     margin: auto;
@@ -250,6 +251,21 @@ Label[for="vermelho"]::after {
 .modelo input:not(:checked) + label img {
     display: none;
 }
+
+/* ----- CORPO COMPRAR PRODUTO ----- */
+
+.buyprod {
+    margin: auto;
+    width: 80%;
+    height: auto;
+}
+
+.buyform {
+    margin: auto;
+    width: 80%;
+}
+
+
 
 /* ----- CORPO SOBRE ----- */
 
