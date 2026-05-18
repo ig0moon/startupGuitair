@@ -5,15 +5,31 @@ include 'inc/header.inc.php';
 
 <div class="container">
 
+    <h3 class="titleAI">BEM-VINDO AO GUIT<span class="gradientAI">AI</span>R</h3>
+
+    <br>
+    
     <div class="banner">
         <img src="./img/banner_guitair.png" alt="Banner GuitAIr">
         <img src="./img/banner_guitair2.png" alt="Banner GuitAIr">
     </div>
 
     <br>
+    <br>
+    <br>
 
-    <h3 class="titleAI">BEM-VINDO AO GUIT<span class="gradientAI">AI</span>R</h3>
+    <div class="conscientizacao">
+        <h3><span class="conscient">Maio Laranja</span></h3>
+        <br>
 
+        <a href="orangemay.php"><img src="./img/orangemay.png" alt="Maio Laranja"></a>
+        <br>
+        <br>
+
+        <h2>Acesse, clicando na imagem, mais informações sobre a campanha do Maio Laranja.</h2>
+    </div>
+
+    <br>
     <br>
 
     <div class="div-inst">

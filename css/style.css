@@ -96,6 +96,10 @@ header {
     display: none;
 }
 
+.nav-mobile-menu {
+    display: none;
+}
+
 
 /* ----- CORPO INDEX ----- */
 
@@ -122,6 +126,49 @@ header {
     background-clip: text;
     -webkit-text-fill-color: transparent;
     -webkit-text-stroke: 0.3px white;
+}
+
+.conscientizacao {
+    width: 50%;
+    height: 650px;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    text-align: center;
+    font-family: poppins, arial, sans-serif;
+    background-color: #1a1a24;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.conscientizacao h3 {
+    justify-content: flex-start;
+    font-size: 30px;
+}
+
+.conscientizacao h2 {
+    font-size: 20px;
+}
+
+.conscient {
+    background: linear-gradient(rgb(255, 0, 0), #ffb269);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 0.3px white;
+}
+
+.conscientizacao img {
+    width: 80%;
+    height: 450px;
+    border-radius: 20px;
+    transition: 200ms;
+}
+
+.conscientizacao img:hover {
+    width: 81%;
+    height: 460px;
+    margin-top: -2px;
 }
 
 .banner {
@@ -265,6 +312,74 @@ Label[for="vermelho"]::after {
     width: 80%;
 }
 
+
+/* ----- CORPO MAIO LARANJA ----- */
+
+.pageconscient {
+    width: 80%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    text-align: center;
+    font-family: poppins, arial, sans-serif;
+    background-color: #1a1a24;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.pageconscient h3 {
+    justify-content: flex-start;
+    font-size: 30px;
+}
+
+.pageconscient p {
+    width: 80%;
+    margin: auto;
+    text-align: justify;
+    font-size: 20px;
+}
+
+.pageconscient img {
+    width: 700px;
+    height: 530px;
+    border-radius: 20px;
+    transition: 200ms;
+    margin: auto;
+}
+
+.formconsc {
+    width: 50%;
+    margin: auto;
+    background-color: #2f2f41;
+    border-radius: 20px;
+    padding-top: 25px;
+    padding-bottom: 25px;
+    font-size: 20px;
+}
+
+.formconsc form .texto {
+    width: 70%;
+    height: 30px;
+    border-radius: 20px;
+    padding: 5px;
+}
+
+.formconsc form textarea {
+    width: 70%;
+    height: 70px;
+}
+
+.formconsc form .botao {
+    width: 50%;
+    height: 50px;
+    transition: 200ms;
+}
+
+.formconsc form .botao:hover {
+    color: white;
+    background-color: rgb(255, 123, 0);
+}
 
 
 /* ----- CORPO SOBRE ----- */
