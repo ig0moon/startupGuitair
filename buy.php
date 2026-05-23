@@ -6,6 +6,8 @@ include 'inc/header.inc.php';
 <script type="text/javascript" src="js/jquery-4.0.0.min.js"></script>
 <script type="text/javascript" src="js/buy.js"></script>
 
+<br>
+
 <div class="buyprod">
     <form class="buyform">
         <fieldset class="buy">

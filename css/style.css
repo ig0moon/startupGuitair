@@ -467,6 +467,48 @@ Label[for="vermelho"]::after {
     background-position: right;
 }
 
+/* ----- RODAPÉ ----- */
+
+footer {
+    width: 100%;
+    height: 70px;
+    margin: auto;
+    bottom: 0;
+}
+
+.rodape {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.guit-footer {
+    width: 6%;
+    height: 30%;
+}
+
+.guit-footer img {
+    width: 100%;
+    height: 100%;
+}
+
+.nav-footer {
+    width: 50%;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.nav-footer li {
+    display: inline;
+}
+
+
 /* ----- RESPONSIVO ----- */
 
 @media (max-width: 1000px) {

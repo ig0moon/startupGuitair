@@ -64,3 +64,7 @@ include './inc/header.inc.php';
 </div>
 
 <br>
+
+<?php
+include 'inc/footer.inc.php';
+?>
