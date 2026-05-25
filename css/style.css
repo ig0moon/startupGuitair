@@ -46,16 +46,15 @@ header {
 }
 
 .logo {
-    width: 300px;
-    height: 100px;
-    float: left;
-    margin-left: 30px;
+    margin: auto;
+    width: 170px;
+    height: 30px;
+    margin-left: 60px;
 }
 
 .logo img {
-    padding-top: 30px;
-    width: 230px;
-    height: 40%;
+    width: 100%;
+    height: 100%;
 }
 
 .navbar {
@@ -129,7 +128,7 @@ header {
 }
 
 .conscientizacao {
-    width: 50%;
+    width: 70%;
     height: 650px;
     display: flex;
     flex-direction: column;
@@ -159,7 +158,7 @@ header {
 }
 
 .conscientizacao img {
-    width: 80%;
+    max-width: 550px;
     height: 450px;
     border-radius: 20px;
     transition: 200ms;
@@ -470,8 +469,11 @@ Label[for="vermelho"]::after {
 /* ----- RODAPÉ ----- */
 
 footer {
+    font-family: poppins, arial, sans-serif;
+    font-weight: 500;
+    font-size: 15px;
     width: 100%;
-    height: 70px;
+    height: 90px;
     margin: auto;
     bottom: 0;
 }
@@ -485,8 +487,8 @@ footer {
 }
 
 .guit-footer {
-    width: 6%;
-    height: 30%;
+    width: 100px;
+    height: 20px;
 }
 
 .guit-footer img {
@@ -506,6 +508,16 @@ footer {
 
 .nav-footer li {
     display: inline;
+}
+
+.nav-footer a {
+    color: #777788;
+    text-decoration: none;
+    transition: 200ms;
+}
+
+.nav-footer a:hover {
+    color: #ffffff;
 }
 
 
@@ -572,13 +584,12 @@ footer {
     }
 
     .logo {
-        width: 100%;
+        margin: auto;
+        width: 200px;
         height: 100px;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin: 0;
-        padding: 0;
     }
 
     .logo img {
@@ -590,11 +601,10 @@ footer {
     }
 
     .nav-mobile-menu {
-    display: flex;
-    align-items: center;
-    padding: 0 25px;
-    margin-right: auto;
-}
+        display: flex;
+        align-items: center;
+        padding: 0 25px;
+    }
 
     .hamburger-btn {
         background: transparent;
@@ -676,6 +686,116 @@ footer {
         margin: auto;
     }
 
+
+    /* ----- CORPO MAIO LARANJA ----- */
+
+    .conscientizacao {
+        width: 80%;
+        height: 520px;
+        display: flex;
+        flex-direction: column;
+        margin: auto;
+        text-align: center;
+        font-family: poppins, arial, sans-serif;
+        background-color: #1a1a24;
+        border-radius: 20px;    
+    }
+
+    .conscientizacao h3 {
+        justify-content: flex-start;
+        font-size: 30px;
+    }
+
+    .conscientizacao h2 {
+        font-size: 20px;
+    }
+
+    .conscient {
+        background: linear-gradient(rgb(255, 0, 0), #ffb269);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        -webkit-text-stroke: 0.3px white;
+    }
+
+    .conscientizacao img {
+        max-width: 320px;
+        max-height: 300px;
+        border-radius: 20px;
+        transition: 200ms;
+    }
+
+    .conscientizacao img:hover {
+        width: 410px;
+        max-height: 360px;
+    }
+
+    .pageconscient {
+        width: 80%;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        margin: auto;
+        text-align: center;
+        font-family: poppins, arial, sans-serif;
+        background-color: #1a1a24;
+        border-radius: 20px;
+        padding: 20px;
+    }
+    
+    .pageconscient h3 {
+        justify-content: flex-start;
+        font-size: 30px;
+    }
+    
+    .pageconscient p {
+        width: 80%;
+        margin: auto;
+        text-align: justify;
+        font-size: 20px;
+    }
+    
+    .pageconscient img {
+        width: 700px;
+        height: 530px;
+        border-radius: 20px;
+        transition: 200ms;
+        margin: auto;
+    }
+    
+    .formconsc {
+        width: 50%;
+        margin: auto;
+        background-color: #2f2f41;
+        border-radius: 20px;
+        padding-top: 25px;
+        padding-bottom: 25px;
+        font-size: 20px;
+    }
+    
+    .formconsc form .texto {
+        width: 70%;
+        height: 30px;
+        border-radius: 20px;
+        padding: 5px;
+    }
+    
+    .formconsc form textarea {
+        width: 70%;
+        height: 70px;
+    }
+    
+    .formconsc form .botao {
+        width: 50%;
+        height: 50px;
+        transition: 200ms;
+    }
+    
+    .formconsc form .botao:hover {
+        color: white;
+        background-color: rgb(255, 123, 0);
+    }
+
     /* ----- RESPONSIVO SOBRE ----- */
 
     .bubble {
@@ -691,5 +811,52 @@ footer {
         height: auto;
     }
 
+
+    /* ----- RODAPÉ ----- */
+
+    footer {
+        font-family: poppins, arial, sans-serif;
+        font-weight: 500;
+        font-size: 15px;
+        width: 100%;
+        height: auto;
+        margin: auto;
+        bottom: 0;
+        display: flex;
+    }
+
+    .rodape {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .guit-footer {
+        width: 150px;
+        height: 30px;
+        padding: 10px;
+    }
+
+    .guit-footer img {
+        width: 100%;
+        height: 100%;
+    }
+
+    .nav-footer {
+        width: 80%;
+        list-style: none;
+        padding: 10px;
+        gap: 15px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .nav-footer li {
+        text-align: center;
+        display: block;
+    }
 
 }

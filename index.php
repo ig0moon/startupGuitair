@@ -24,7 +24,6 @@ include 'inc/header.inc.php';
 
         <a href="orangemay.php"><img src="./img/orangemay.png" alt="Maio Laranja"></a>
         <br>
-        <br>
 
         <h2>Acesse, clicando na imagem, mais informações sobre a campanha do Maio Laranja.</h2>
     </div>
