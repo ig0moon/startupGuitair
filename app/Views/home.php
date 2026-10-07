@@ -1,0 +1,108 @@
+<?= view('templates/header', ['pageTitle' => 'GuitAIr - Home']) ?>
+
+<div class="container">
+
+    <h3 class="titleAI">BEM-VINDO AO GUIT<span class="gradientAI">AI</span>R</h3>
+
+    <br>
+    
+    <div class="banner">
+        <img src="<?= base_url('img/banner_guitair.png') ?>" alt="Banner GuitAIr">
+        <img src="<?= base_url('img/banner_guitair2.png') ?>" alt="Banner GuitAIr">
+    </div>
+
+    <br>
+    <br>
+    <br>
+
+    <div class="conscientizacao">
+        <h3><span class="conscient">Maio Laranja</span></h3>
+        <br>
+
+        <a href="<?= base_url('maio-laranja') ?>"><img src="<?= base_url('img/orangemay.png') ?>" alt="Maio Laranja"></a>
+        <br>
+
+        <h2>Acesse, clicando na imagem, mais informações sobre a campanha do Maio Laranja.</h2>
+    </div>
+
+    <br>
+    <br>
+
+    <div class="div-inst">
+        <form class="instrumentos" method="POST" action="<?= base_url('comprar') ?>">
+            <?= csrf_field() ?>
+            <fieldset class="modelo">
+                <legend>CONHEÇA NOSSOS PRODUTOS</legend>
+                <input class="chkimg" type="radio" name="modelo" value="amarelo" id="amarelo" checked>
+                <label for="amarelo">
+                    <img src="<?= base_url('img/violao.png') ?>" alt="Violão">
+                    <div class="texto-instr">
+                        <h1>GuitAIr</h1>
+                        <p>Instrumento versátil e acessível, ideal para quem está começando ou busca praticidade 
+                            no dia a dia. O violão oferece um som encorpado e natural, dispensando o uso de amplificadores. 
+                            Perfeito para estilos como MPB, sertanejo, pop e acústico em geral, é uma excelente escolha tanto 
+                            para estudo quanto para apresentações intimistas.</p>
+
+                            <br>
+                            <br>
+                            
+                            <div class="compr-prod">
+                                <input type="submit" name="comprar" value="Comprar" id="produto">
+                            </div>
+                    </div>
+                </label>
+
+                <input class="chkimg" type="radio" name="modelo" value="azul" id="azul">
+                <label for="azul">
+                    <img src="<?= base_url('img/guitarra.png') ?>" alt="Guitarra">
+                    <div class="texto-instr">
+                        <h1>Eletric GuitAIr</h1>
+                        <p>Projetada para quem busca potência e variedade sonora, a guitarra é um instrumento elétrico que permite 
+                            explorar diversos estilos musicais, como rock, metal, blues e jazz. Combinada com amplificadores e 
+                            efeitos, oferece uma ampla gama de timbres, sendo ideal para músicos que desejam personalizar seu som 
+                            e se destacar em performances.</p>
+
+                            <br>
+                            <br>
+                            
+                            <div class="compr-prod">
+                                <input type="submit" name="comprar" value="Comprar" id="produto">
+                            </div>
+                    </div>
+                </label>
+
+                <input class="chkimg" type="radio" name="modelo" value="vermelho" id="vermelho">
+                <label for="vermelho">
+                    <img src="<?= base_url('img/bateria.png') ?>" alt="Bateria">
+                    <div class="texto-instr">
+                        <h1>DrumIA</h1>
+                        <p>Instrumento essencial para marcação de ritmo e energia musical, a bateria é composta por diversos elementos 
+                            que permitem criar batidas complexas e dinâmicas. Presente em praticamente todos os estilos musicais, é 
+                            ideal para quem gosta de intensidade e coordenação. Pode ser encontrada em versões acústicas ou eletrônicas, 
+                            atendendo diferentes necessidades e ambientes.</p>
+                            
+                            <br>
+                            <br>
+                            
+                            <div class="compr-prod">
+                                <input type="submit" name="comprar" value="Comprar" id="produto">
+                            </div>
+                    </div>
+                </label>
+            </fieldset>
+        </form>
+    </div>
+
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+
+    <div class="container-content">
+
+    </div>
+
+</div>
+
+<?= view('templates/footer') ?>
