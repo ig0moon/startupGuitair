@@ -6,6 +6,8 @@ class About extends BaseController
 {
     public function index(): string
     {
-        return view('about');
+        return view('about', [
+            'pageTitle' => 'GuitAIr - Nossa História, Missão e Tecnologia com IA'
+        ]);
     }
 }

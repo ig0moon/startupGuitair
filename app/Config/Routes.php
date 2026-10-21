@@ -12,24 +12,42 @@ $routes->get('about.php', 'About::index');
 
 // Produtos
 $routes->get('produtos', 'Products::index');
+$routes->get('produtos/(:segment)', 'Products::show/$1');
 $routes->get('prod.php', 'Products::index');
 
-// Compra
-$routes->match(['get', 'post'], 'comprar', 'Buy::index');
-$routes->match(['get', 'post'], 'buy.php', 'Buy::index');
+// Compra & Checkout
+$routes->match(['GET', 'POST'], 'comprar', 'Buy::index');
+$routes->post('comprar/finalizar', 'Buy::checkout');
+$routes->match(['GET', 'POST'], 'buy.php', 'Buy::index');
 
-// Ajuda / Dúvidas
+// Carrinho de Compras
+$routes->get('carrinho', 'Cart::index');
+$routes->post('carrinho/adicionar', 'Cart::add');
+$routes->post('carrinho/atualizar', 'Cart::update');
+$routes->get('carrinho/remover/(:segment)', 'Cart::remove/$1');
+$routes->post('carrinho/remover', 'Cart::removePost');
+$routes->get('carrinho/limpar', 'Cart::clear');
+$routes->post('carrinho/cupom', 'Cart::applyCoupon');
+$routes->get('cart.php', 'Cart::index');
+
+// Conta / Autenticação
+$routes->match(['GET', 'POST'], 'conta', 'Account::index');
+$routes->post('conta/login', 'Account::login');
+$routes->post('conta/cadastro', 'Account::register');
+$routes->get('conta/sair', 'Account::logout');
+$routes->match(['GET', 'POST'], 'acc.php', 'Account::index');
+
+// Ajuda / Central de Dúvidas
 $routes->get('ajuda', 'Help::index');
 $routes->get('help.php', 'Help::index');
 
-// Conta
-$routes->match(['get', 'post'], 'conta', 'Account::index');
-$routes->match(['get', 'post'], 'acc.php', 'Account::index');
+// Painel Administrativo (Acesso restrito por role no MySQL)
+$routes->get('admin', 'Admin::index');
+$routes->post('admin/alterar-funcao', 'Admin::changeRole');
+$routes->get('admin/compras-usuarios', 'Admin::userPurchases');
+$routes->get('admin/pedidos', 'Admin::orders');
+$routes->post('admin/alterar-status-pedido', 'Admin::updateOrderStatus');
 
-// Carrinho
-$routes->get('carrinho', 'Cart::index');
-$routes->get('cart.php', 'Cart::index');
-
-// Campanha Maio Laranja
-$routes->match(['get', 'post'], 'maio-laranja', 'OrangeMay::index');
-$routes->match(['get', 'post'], 'orangemay.php', 'OrangeMay::index');
+// Redirecionamentos de rotas antigas
+$routes->addRedirect('maio-laranja', '/');
+$routes->addRedirect('orangemay.php', '/');
