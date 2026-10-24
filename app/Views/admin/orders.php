@@ -41,17 +41,17 @@
         </h2>
 
         <?php if (!empty($orders)): ?>
-            <div class="table-responsive">
+            <div class="table-responsive" style="margin-bottom: 0;">
                 <table class="admin-table">
                     <thead>
                         <tr>
                             <th>PEDIDO</th>
                             <th>CLIENTE</th>
-                            <th>DATA / HORA</th>
+                            <th>DATA</th>
                             <th>PAGAMENTO</th>
                             <th>TOTAL</th>
                             <th>ITENS</th>
-                            <th>STATUS ATUAL & ATUALIZAÇÃO (QUERY BUILDER)</th>
+                            <th>STATUS & ATUALIZAÇÃO</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -74,9 +74,7 @@
                                     <?= date('d/m/Y H:i', strtotime($ord['created_at'])) ?>
                                 </td>
                                 <td>
-                                    <span class="payment-badge payment-<?= strtolower(esc($ord['payment_method'])) ?>">
-                                        <?= esc($ord['payment_method']) ?>
-                                    </span>
+                                    <?= payment_method_badge($ord['payment_method']) ?>
                                 </td>
                                 <td>
                                     <span style="font-family: var(--font-code); font-weight: 800; color: var(--brand-emerald); font-size: 1.05rem;">
@@ -93,21 +91,48 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                        <span class="status-badge status-<?= esc($ord['status']) ?>">
-                                            <?= esc(ucfirst($ord['status'])) ?>
-                                        </span>
-                                        <form method="POST" action="<?= base_url('admin/alterar-status-pedido') ?>" style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <div class="status-cell-aligned">
+                                        <div class="current-status-wrapper">
+                                            <?= order_status_badge($ord['status']) ?>
+                                        </div>
+                                        
+                                        <form method="POST" action="<?= base_url('admin/alterar-status-pedido') ?>" class="status-form-aligned">
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="order_id" value="<?= esc($ord['id']) ?>">
-                                            <select name="status" style="padding: 5px 10px; font-size: 0.82rem; border-radius: var(--radius-sm); background: #0c0e16; border: 1px solid var(--border-subtle); color: #fff;">
-                                                <option value="pending" <?= ($ord['status'] === 'pending') ? 'selected' : '' ?>>Pendente</option>
-                                                <option value="paid" <?= ($ord['status'] === 'paid') ? 'selected' : '' ?>>Pago</option>
-                                                <option value="shipped" <?= ($ord['status'] === 'shipped') ? 'selected' : '' ?>>Enviado</option>
-                                                <option value="completed" <?= ($ord['status'] === 'completed') ? 'selected' : '' ?>>Concluído</option>
-                                                <option value="cancelled" <?= ($ord['status'] === 'cancelled') ? 'selected' : '' ?>>Cancelado</option>
-                                            </select>
-                                            <button type="submit" class="btn btn-secondary btn-sm" style="padding: 5px 12px; font-size: 0.8rem; border-color: rgba(6, 182, 212, 0.4); color: var(--brand-cyan);">
+                                            <input type="hidden" name="status" class="dropdown-hidden-status" value="<?= esc($ord['status']) ?>">
+                                            
+                                            <!-- Custom Div Dropdown for Status -->
+                                            <div class="custom-div-dropdown" data-order-id="<?= esc($ord['id']) ?>">
+                                                <div class="custom-div-trigger" tabindex="0" role="button" aria-haspopup="listbox">
+                                                    <span class="trigger-dot dot-<?= esc($ord['status']) ?>"></span>
+                                                    <span class="trigger-label"><?= esc(order_status_label($ord['status'])) ?></span>
+                                                    <span class="material-symbols-outlined trigger-chevron">expand_more</span>
+                                                </div>
+                                                <div class="custom-div-menu" role="listbox">
+                                                    <div class="custom-div-option <?= ($ord['status'] === 'pending') ? 'selected' : '' ?>" data-val="pending" data-label="Pendente">
+                                                        <span class="option-dot dot-pending"></span>
+                                                        <span>Pendente</span>
+                                                    </div>
+                                                    <div class="custom-div-option <?= ($ord['status'] === 'paid') ? 'selected' : '' ?>" data-val="paid" data-label="Pago">
+                                                        <span class="option-dot dot-paid"></span>
+                                                        <span>Pago</span>
+                                                    </div>
+                                                    <div class="custom-div-option <?= ($ord['status'] === 'shipped') ? 'selected' : '' ?>" data-val="shipped" data-label="Enviado">
+                                                        <span class="option-dot dot-shipped"></span>
+                                                        <span>Enviado</span>
+                                                    </div>
+                                                    <div class="custom-div-option <?= ($ord['status'] === 'completed') ? 'selected' : '' ?>" data-val="completed" data-label="Concluído">
+                                                        <span class="option-dot dot-completed"></span>
+                                                        <span>Concluído</span>
+                                                    </div>
+                                                    <div class="custom-div-option <?= ($ord['status'] === 'cancelled') ? 'selected' : '' ?>" data-val="cancelled" data-label="Cancelado">
+                                                        <span class="option-dot dot-cancelled"></span>
+                                                        <span>Cancelado</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button type="submit" class="btn btn-secondary btn-sm btn-status-save" title="Salvar alteração no MySQL">
                                                 Salvar
                                             </button>
                                         </form>

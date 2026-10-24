@@ -2,10 +2,38 @@
 
 <div class="container">
 
+    <!-- Passos do Pedido / Stepper -->
+    <div class="order-stepper-wrap" style="margin-bottom: 30px;">
+        <div class="order-stepper">
+            <a href="<?= base_url('carrinho') ?>" class="stepper-step completed" style="text-decoration: none;">
+                <span class="step-circle"><span class="material-symbols-outlined" style="font-size: 18px;">check</span></span>
+                <div class="step-info">
+                    <span class="step-number">Passo 1</span>
+                    <span class="step-name">Carrinho Revisado</span>
+                </div>
+            </a>
+            <div class="stepper-line completed"></div>
+            <div class="stepper-step active">
+                <span class="step-circle"><span class="material-symbols-outlined" style="font-size: 18px;">local_shipping</span></span>
+                <div class="step-info">
+                    <span class="step-number">Passo 2</span>
+                    <span class="step-name">Entrega & Dados</span>
+                </div>
+            </div>
+            <div class="stepper-line"></div>
+            <div class="stepper-step">
+                <span class="step-circle"><span class="material-symbols-outlined" style="font-size: 18px;">payments</span></span>
+                <div class="step-info">
+                    <span class="step-number">Passo 3</span>
+                    <span class="step-name">Pagamento</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="section-header" style="text-align: left; margin-bottom: 28px;">
-        <span class="badge badge-orange" style="margin-bottom: 8px;">CHECKOUT SEGURO</span>
+        <span class="badge badge-orange" style="margin-bottom: 8px;">ETAPA 2 DE 3 &bull; ENTREGA E PAGAMENTO</span>
         <h1 class="titleAI" style="text-align: left;">FINALIZAR <span class="gradientAI">PEDIDO</span></h1>
-        <p style="color: var(--text-secondary);">Ambiente seguro criptografado com chave SSL de 256 bits.</p>
     </div>
 
     <form method="POST" action="<?= base_url('comprar/finalizar') ?>" id="checkoutForm">
@@ -18,8 +46,9 @@
                 <!-- 1. Dados do Cliente -->
                 <div class="glass-card">
                     <h2 style="font-size: 1.3rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <span class="badge badge-cyan" style="font-size: 0.72rem; padding: 3px 8px;">PASSO 1</span>
                         <span class="material-symbols-outlined" style="color: var(--brand-primary);">person</span>
-                        1. Dados Pessoais
+                        Dados Pessoais
                     </h2>
 
                     <div class="form-row">
@@ -45,8 +74,9 @@
                 <!-- 2. Endereço de Entrega -->
                 <div class="glass-card">
                     <h2 style="font-size: 1.3rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <span class="badge badge-cyan" style="font-size: 0.72rem; padding: 3px 8px;">PASSO 2</span>
                         <span class="material-symbols-outlined" style="color: var(--brand-cyan);">local_shipping</span>
-                        2. Endereço de Envio
+                        Endereço de Entrega
                     </h2>
 
                     <div class="form-row">
@@ -95,16 +125,19 @@
                 <!-- 3. Forma de Pagamento -->
                 <div class="glass-card">
                     <h2 style="font-size: 1.3rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                        <span class="badge badge-cyan" style="font-size: 0.72rem; padding: 3px 8px;">PASSO 3</span>
                         <span class="material-symbols-outlined" style="color: var(--brand-secondary);">payments</span>
-                        3. Forma de Pagamento
+                        Forma de Pagamento
                     </h2>
 
                     <input type="hidden" name="payment_method" id="selectedPaymentMethod" value="pix">
 
                     <div class="payment-methods-grid">
                         <div class="payment-method-card active" data-method="pix">
-                            <span class="material-symbols-outlined">qr_code_2</span>
-                            <div style="font-weight: 600; font-size: 0.95rem;">PIX Instantâneo</div>
+                            <div class="payment-icon-wrap" style="color: var(--brand-emerald); display: flex; align-items: center; justify-content: center; margin-bottom: 4px;">
+                                <?= pix_svg(26) ?>
+                            </div>
+                            <div style="font-weight: 600; font-size: 0.95rem;">PIX</div>
                             <small style="color: var(--brand-emerald); font-weight: 500;">Aprovação Imediata</small>
                         </div>
 

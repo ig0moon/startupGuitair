@@ -64,6 +64,17 @@
         </div>
     </footer>
 
+    <!-- Floating WhatsApp Action Button -->
+    <a href="<?= whatsapp_link('Olá, gostaria de tirar dúvidas sobre os instrumentos GuitAIr!') ?>" 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="floating-whatsapp-btn" 
+       title="Fale Conosco no WhatsApp: <?= whatsapp_phone_formatted() ?>" 
+       aria-label="Atendimento via WhatsApp (42) 99807-2016">
+        <?= whatsapp_svg(28) ?>
+        <span class="floating-whatsapp-tooltip">Dúvidas? Fale no WhatsApp</span>
+    </a>
+
     <!-- Floating Scroll-To-Top Button -->
     <div class="scrlbtn" title="Voltar ao Topo" aria-label="Subir ao topo">
         <span class="material-symbols-outlined" style="font-size: 26px;">keyboard_arrow_up</span>

@@ -47,9 +47,9 @@
                 <span class="material-symbols-outlined">mail</span>
                 suporte@guitair.com.br
             </a>
-            <a href="https://wa.me/5511999999999" target="_blank" class="btn btn-secondary" style="border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7;">
-                <span class="material-symbols-outlined">chat</span>
-                Falar pelo WhatsApp
+            <a href="<?= whatsapp_link() ?>" target="_blank" class="btn btn-secondary btn-whatsapp" style="border-color: rgba(16, 185, 129, 0.4); color: #34d399; display: inline-flex; align-items: center; gap: 8px;">
+                <?= whatsapp_svg(20) ?>
+                Falar pelo WhatsApp (42) 99807-2016
             </a>
         </div>
     </div>

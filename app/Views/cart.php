@@ -2,8 +2,37 @@
 
 <div class="container">
 
+    <!-- Passos do Pedido / Stepper -->
+    <div class="order-stepper-wrap" style="margin-bottom: 30px;">
+        <div class="order-stepper">
+            <div class="stepper-step active">
+                <span class="step-circle"><span class="material-symbols-outlined" style="font-size: 18px;">shopping_cart</span></span>
+                <div class="step-info">
+                    <span class="step-number">Passo 1</span>
+                    <span class="step-name">Seu Carrinho</span>
+                </div>
+            </div>
+            <div class="stepper-line"></div>
+            <div class="stepper-step">
+                <span class="step-circle"><span class="material-symbols-outlined" style="font-size: 18px;">local_shipping</span></span>
+                <div class="step-info">
+                    <span class="step-number">Passo 2</span>
+                    <span class="step-name">Entrega & Dados</span>
+                </div>
+            </div>
+            <div class="stepper-line"></div>
+            <div class="stepper-step">
+                <span class="step-circle"><span class="material-symbols-outlined" style="font-size: 18px;">payments</span></span>
+                <div class="step-info">
+                    <span class="step-number">Passo 3</span>
+                    <span class="step-name">Pagamento</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="section-header" style="text-align: left; margin-bottom: 24px;">
-        <span class="badge badge-orange" style="margin-bottom: 8px;">CHECKOUT STEP 1</span>
+        <span class="badge badge-orange" style="margin-bottom: 8px;">ETAPA 1 DE 3 &bull; REVISÃO DE ITENS</span>
         <h1 class="titleAI" style="text-align: left;">SEU <span class="gradientAI">CARRINHO</span> DE COMPRAS</h1>
     </div>
 

@@ -138,6 +138,140 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // 9. Custom Div Dropdowns (Admin Orders & Form controls)
+    const customDropdowns = document.querySelectorAll('.custom-div-dropdown');
+    customDropdowns.forEach(dropdown => {
+        const trigger = dropdown.querySelector('.custom-div-trigger');
+        const menu = dropdown.querySelector('.custom-div-menu');
+        const hiddenInput = dropdown.closest('form')?.querySelector('.dropdown-hidden-status') || dropdown.querySelector('.dropdown-hidden-status');
+        const labelSpan = dropdown.querySelector('.trigger-label');
+        const dotSpan = dropdown.querySelector('.trigger-dot');
+        const options = dropdown.querySelectorAll('.custom-div-option');
+        const saveBtn = dropdown.closest('form')?.querySelector('.btn-status-save');
+
+        if (!trigger || !menu) return;
+
+        // Toggle dropdown open
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = dropdown.classList.contains('open');
+
+            // Close all other dropdowns
+            customDropdowns.forEach(d => {
+                if (d !== dropdown) {
+                    d.classList.remove('open');
+                }
+            });
+
+            if (!isOpen) {
+                dropdown.classList.add('open');
+                const rect = trigger.getBoundingClientRect();
+                menu.style.position = 'fixed';
+                menu.style.left = `${rect.left}px`;
+                menu.style.minWidth = `${Math.max(rect.width, 140)}px`;
+
+                const menuHeight = 185;
+                const spaceBelow = window.innerHeight - rect.bottom;
+
+                if (spaceBelow < menuHeight + 10 && rect.top > menuHeight + 10) {
+                    menu.style.top = `${rect.top - menuHeight - 4}px`;
+                } else {
+                    menu.style.top = `${rect.bottom + 4}px`;
+                }
+            } else {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        // Trigger keyboard support
+        trigger.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                trigger.click();
+            } else if (e.key === 'Escape') {
+                dropdown.classList.remove('open', 'open-up');
+            }
+        });
+
+        // Option selection
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const val = option.getAttribute('data-val');
+                const label = option.getAttribute('data-label') || option.textContent.trim();
+
+                if (hiddenInput) {
+                    hiddenInput.value = val;
+                }
+                if (labelSpan) {
+                    labelSpan.textContent = label;
+                }
+                if (dotSpan) {
+                    dotSpan.className = 'trigger-dot dot-' + val;
+                }
+
+                options.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+
+                dropdown.classList.remove('open', 'open-up');
+
+                // Visual highlight feedback on save button
+                if (saveBtn) {
+                    saveBtn.style.transform = 'scale(1.06)';
+                    saveBtn.style.boxShadow = '0 0 18px rgba(6, 182, 212, 0.7)';
+                    setTimeout(() => {
+                        saveBtn.style.transform = '';
+                        saveBtn.style.boxShadow = '';
+                    }, 400);
+                }
+            });
+        });
+    });
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', () => {
+        customDropdowns.forEach(d => d.classList.remove('open', 'open-up'));
+    });
+
+    // Close dropdowns on ESC key, scroll or window resize
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            customDropdowns.forEach(d => d.classList.remove('open'));
+        }
+    });
+    window.addEventListener('scroll', () => {
+        customDropdowns.forEach(d => d.classList.remove('open'));
+    }, { capture: true, passive: true });
+    window.addEventListener('resize', () => {
+        customDropdowns.forEach(d => d.classList.remove('open'));
+    }, { passive: true });
+
+    // 10. Global Click Ripple Animation on Interactive Elements
+    const rippleSelectors = '.btn, .botao, .btn-icon, .qty-btn, .cart-remove-btn, .tab-btn, .auth-tab-btn, .admin-tab, .payment-method-card, .custom-div-trigger, .btn-status-save';
+    document.addEventListener('click', (e) => {
+        const target = e.target.closest(rippleSelectors);
+        if (!target) return;
+
+        const rect = target.getBoundingClientRect();
+        const ripple = document.createElement('span');
+        ripple.classList.add('click-ripple');
+
+        const diameter = Math.max(rect.width, rect.height);
+        const radius = diameter / 2;
+
+        ripple.style.width = ripple.style.height = `${diameter}px`;
+        ripple.style.left = `${e.clientX - rect.left - radius}px`;
+        ripple.style.top = `${e.clientY - rect.top - radius}px`;
+
+        const existingRipple = target.querySelector('.click-ripple');
+        if (existingRipple) {
+            existingRipple.remove();
+        }
+
+        target.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+    });
 });
 
 /**

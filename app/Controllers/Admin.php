@@ -103,9 +103,9 @@ class Admin extends BaseController
     {
         if ($redirect = $this->checkAdminAccess()) return $redirect;
 
-        $filterUserId = $this->request->getGet('usuario_id');
+        $search = trim((string)($this->request->getGet('busca') ?? $this->request->getGet('q') ?? $this->request->getGet('usuario_id') ?? ''));
 
-        // Query Builder: list all users for dropdown filter
+        // Query Builder: list all users for reference
         $allUsers = $this->db->table('users')
                              ->select('id, name, email')
                              ->orderBy('name', 'ASC')
@@ -120,6 +120,8 @@ class Admin extends BaseController
             users.email as user_email,
             orders.id as order_id,
             orders.order_number,
+            orders.customer_name,
+            orders.customer_email,
             orders.created_at as order_date,
             orders.status as order_status,
             order_items.product_name,
@@ -132,8 +134,22 @@ class Admin extends BaseController
         $builder->join('users', 'users.id = orders.user_id', 'left');
         $builder->join('products', 'products.id = order_items.product_id', 'left');
 
-        if (!empty($filterUserId)) {
-            $builder->where('orders.user_id', (int)$filterUserId);
+        if (!empty($search)) {
+            if (is_numeric($search)) {
+                $builder->groupStart()
+                        ->where('orders.user_id', (int)$search)
+                        ->orWhere('orders.id', (int)$search)
+                        ->groupEnd();
+            } else {
+                $builder->groupStart()
+                        ->like('users.name', $search)
+                        ->orLike('users.email', $search)
+                        ->orLike('orders.customer_name', $search)
+                        ->orLike('orders.customer_email', $search)
+                        ->orLike('orders.order_number', $search)
+                        ->orLike('order_items.product_name', $search)
+                        ->groupEnd();
+            }
         }
 
         $builder->orderBy('orders.id', 'DESC');
@@ -143,13 +159,14 @@ class Admin extends BaseController
         $groupedByUser = [];
         foreach ($purchases as $row) {
             $uId = $row['user_id'] ?? 'guest';
-            $uName = $row['user_name'] ?? 'Cliente Convidado (' . $row['user_email'] . ')';
+            $uName = !empty($row['user_name']) ? $row['user_name'] : (!empty($row['customer_name']) ? $row['customer_name'] : 'Cliente Convidado');
+            $uEmail = !empty($row['user_email']) ? $row['user_email'] : ($row['customer_email'] ?? 'Sem e-mail');
             
             if (!isset($groupedByUser[$uId])) {
                 $groupedByUser[$uId] = [
                     'user_id'    => $uId,
                     'user_name'  => $uName,
-                    'user_email' => $row['user_email'],
+                    'user_email' => $uEmail,
                     'items'      => [],
                     'total_spent'=> 0
                 ];
@@ -161,7 +178,7 @@ class Admin extends BaseController
         return view('admin/user_purchases', [
             'allUsers'       => $allUsers,
             'groupedByUser'  => $groupedByUser,
-            'selectedUserId' => $filterUserId,
+            'searchQuery'    => $search,
             'totalRecords'   => count($purchases),
             'pageTitle'      => 'GuitAIr Admin - Produtos Comprados por Usuário'
         ]);
@@ -219,6 +236,7 @@ class Admin extends BaseController
                      'updated_at' => date('Y-m-d H:i:s')
                  ]);
 
-        return redirect()->back()->with('success', 'Status do Pedido #' . $orderId . ' atualizado para ' . strtoupper($status) . '!');
+        $statusName = function_exists('order_status_label') ? order_status_label($status) : strtoupper($status);
+        return redirect()->back()->with('success', 'Status do Pedido #' . $orderId . ' alterado para "' . $statusName . '" com sucesso!');
     }
 }

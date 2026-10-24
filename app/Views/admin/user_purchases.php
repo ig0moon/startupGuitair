@@ -33,27 +33,35 @@
         </a>
     </div>
 
-    <!-- User Filter Bar -->
+    <!-- User Search Filter Bar -->
     <div class="glass-card" style="padding: 20px 24px; margin-bottom: 28px;">
-        <form method="GET" action="<?= base_url('admin/compras-usuarios') ?>" class="admin-filter-form" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-            <label for="filterUserSelect" style="font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
-                <span class="material-symbols-outlined" style="color: var(--brand-cyan);">filter_alt</span>
-                Filtrar por Cliente:
-            </label>
+        <form method="GET" action="<?= base_url('admin/compras-usuarios') ?>" class="admin-filter-form" style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div style="font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; color: var(--text-primary); white-space: nowrap;">
+                <span class="material-symbols-outlined" style="color: var(--brand-cyan);">search</span>
+                Pesquisar Cliente:
+            </div>
             
-            <select name="usuario_id" id="filterUserSelect" style="max-width: 380px; padding: 10px 16px;">
-                <option value="">-- Todos os Clientes --</option>
-                <?php foreach ($allUsers as $usr): ?>
-                    <option value="<?= esc($usr['id']) ?>" <?= ($selectedUserId == $usr['id']) ? 'selected' : '' ?>>
-                        <?= esc($usr['name']) ?> (<?= esc($usr['email']) ?>)
-                    </option>
-                <?php endforeach; ?>
-            </select>
+            <div class="search-input-wrapper" style="position: relative; flex: 1; min-width: 260px; max-width: 480px;">
+                <input type="text" 
+                       name="busca" 
+                       id="filterSearchInput" 
+                       value="<?= esc($searchQuery ?? '') ?>" 
+                       placeholder="Digite o nome, e-mail ou número do pedido..." 
+                       style="width: 100%; padding: 10px 16px 10px 42px; background: #0c0e16; border: 1px solid var(--border-subtle); border-radius: var(--radius-full); color: #fff; font-size: 0.92rem; transition: all var(--transition-base);"
+                       autocomplete="off">
+                <span class="material-symbols-outlined" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 19px; color: var(--text-muted); pointer-events: none;">person_search</span>
+            </div>
 
-            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            <button type="submit" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
+                Pesquisar
+            </button>
 
-            <?php if (!empty($selectedUserId)): ?>
-                <a href="<?= base_url('admin/compras-usuarios') ?>" class="btn btn-secondary btn-sm">Limpar Filtro</a>
+            <?php if (!empty($searchQuery)): ?>
+                <a href="<?= base_url('admin/compras-usuarios') ?>" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+                    Limpar
+                </a>
             <?php endif; ?>
 
             <div style="margin-left: auto; color: var(--text-muted); font-size: 0.88rem;">
@@ -139,9 +147,7 @@
                                         R$ <?= number_format($item['subtotal'], 2, ',', '.') ?>
                                     </td>
                                     <td>
-                                        <span class="status-badge status-<?= esc($item['order_status']) ?>">
-                                            <?= esc(ucfirst($item['order_status'])) ?>
-                                        </span>
+                                        <?= order_status_badge($item['order_status']) ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -159,5 +165,28 @@
     <?php endif; ?>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('filterSearchInput');
+    const userCards = document.querySelectorAll('.user-purchase-card');
+    
+    if (searchInput && userCards.length > 0) {
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            userCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (term === '' || text.includes(term)) {
+                    card.style.display = '';
+                    card.style.opacity = '1';
+                } else {
+                    card.style.display = 'none';
+                    card.style.opacity = '0';
+                }
+            });
+        });
+    }
+});
+</script>
 
 <?= view('templates/footer') ?>

@@ -43,7 +43,6 @@
                 <?= $totalUsers ?>
             </div>
             <h3 style="font-size: 1.05rem; margin-top: 4px;">Usuários Cadastrados</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">Tabela `users` no MySQL</p>
         </div>
 
         <div class="feature-box">
@@ -54,7 +53,6 @@
                 <?= $totalOrders ?>
             </div>
             <h3 style="font-size: 1.05rem; margin-top: 4px;">Total de Pedidos</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">Tabela `orders` no MySQL</p>
         </div>
 
         <div class="feature-box">
@@ -65,7 +63,6 @@
                 R$ <?= number_format($totalRevenue, 2, ',', '.') ?>
             </div>
             <h3 style="font-size: 1.05rem; margin-top: 4px;">Faturamento Total</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">Soma de todos os pedidos</p>
         </div>
     </div>
 

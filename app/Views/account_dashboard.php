@@ -129,9 +129,7 @@
                                     <?= date('d/m/Y H:i', strtotime($ord['created_at'] ?? 'now')) ?>
                                 </td>
                                 <td>
-                                    <span class="payment-badge payment-<?= strtolower(esc($ord['payment_method'] ?? 'pix')) ?>">
-                                        <?= esc($ord['payment_method'] ?? 'PIX') ?>
-                                    </span>
+                                    <?= payment_method_badge($ord['payment_method'] ?? 'pix') ?>
                                 </td>
                                 <td>
                                     <span style="font-family: var(--font-code); font-weight: 800; color: var(--brand-emerald); font-size: 1.05rem;">
@@ -139,9 +137,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="status-badge status-<?= esc($ord['status'] ?? 'pending') ?>">
-                                        <?= esc(ucfirst($ord['status'] ?? 'Pendente')) ?>
-                                    </span>
+                                    <?= order_status_badge($ord['status'] ?? 'pending') ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

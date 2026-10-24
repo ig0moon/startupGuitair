@@ -1856,6 +1856,7 @@ footer {
 .table-responsive {
     width: 100%;
     overflow-x: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
@@ -1893,12 +1894,12 @@ footer {
 }
 
 .admin-table th {
-    padding: 16px 22px;
+    padding: 14px 16px;
     background: #0d0f17;
     color: var(--text-muted);
     font-weight: 700;
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
+    font-size: 0.76rem;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     border-bottom: 1px solid var(--border-subtle);
     border-top: none;
@@ -1909,7 +1910,7 @@ footer {
 }
 
 .admin-table td {
-    padding: 18px 22px;
+    padding: 14px 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     border-top: none;
     border-left: none;
@@ -2215,5 +2216,480 @@ footer {
         width: 100%;
         padding-top: 12px;
         border-top: 1px dashed var(--border-subtle);
+    }
+}
+
+
+/* ==========================================================================
+   ALIGNMENT & CUSTOM DIV DROPDOWN (ADMIN ORDERS)
+   ========================================================================== */
+.status-cell-aligned {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    vertical-align: middle;
+}
+
+.current-status-wrapper {
+    display: inline-flex;
+    align-items: center;
+}
+
+.status-form-aligned {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.custom-div-dropdown {
+    position: relative;
+    min-width: 140px;
+    user-select: none;
+}
+
+.custom-div-trigger {
+    height: 34px;
+    padding: 0 12px;
+    background: #0c0e16;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.custom-div-trigger:hover,
+.custom-div-dropdown.open .custom-div-trigger {
+    border-color: var(--brand-cyan);
+    background: #141724;
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+}
+
+.custom-div-dropdown.open .trigger-chevron {
+    transform: rotate(180deg);
+    color: var(--brand-cyan);
+}
+
+.trigger-chevron {
+    font-size: 18px;
+    color: var(--text-muted);
+    transition: transform 0.25s ease, color 0.2s ease;
+}
+
+.trigger-dot,
+.option-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.dot-pending   { background: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.6); }
+.dot-paid      { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.6); }
+.dot-shipped   { background: #22d3ee; box-shadow: 0 0 8px rgba(34, 211, 238, 0.6); }
+.dot-completed { background: #a78bfa; box-shadow: 0 0 8px rgba(167, 139, 250, 0.6); }
+.dot-cancelled { background: #f87171; box-shadow: 0 0 8px rgba(248, 113, 113, 0.6); }
+
+.custom-div-menu {
+    display: none;
+    position: fixed;
+    min-width: 140px;
+    background: #0f121d;
+    border: 1px solid rgba(6, 182, 212, 0.4);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.9), 0 0 20px rgba(6, 182, 212, 0.2);
+    padding: 6px;
+    z-index: 99999;
+    backdrop-filter: blur(14px);
+}
+
+.custom-div-dropdown.open .custom-div-menu {
+    display: block;
+    animation: dropdownFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.custom-div-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.custom-div-option:hover {
+    background: rgba(6, 182, 212, 0.15);
+    color: #fff;
+    transform: translateX(2px);
+}
+
+.custom-div-option.selected {
+    background: rgba(6, 182, 212, 0.22);
+    color: var(--brand-cyan);
+    font-weight: 600;
+}
+
+.btn-status-save {
+    height: 34px;
+    padding: 0 14px;
+    font-size: 0.82rem;
+    border-color: rgba(6, 182, 212, 0.4);
+    color: var(--brand-cyan);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-status-save:hover {
+    background: rgba(6, 182, 212, 0.18);
+    border-color: var(--brand-cyan);
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+    transform: translateY(-1px);
+    color: #fff;
+}
+
+.btn-status-save:active {
+    transform: scale(0.96);
+}
+
+/* ==========================================================================
+   ORDER STEPPER & PROGRESS
+   ========================================================================== */
+.order-stepper-wrap {
+    width: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+}
+
+.order-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 16px 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.stepper-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-muted);
+    transition: all var(--transition-base);
+}
+
+.stepper-step.active {
+    color: #fff;
+}
+
+.stepper-step.completed {
+    color: var(--brand-primary);
+}
+
+.step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: all var(--transition-bounce);
+}
+
+.stepper-step.active .step-circle {
+    background: var(--brand-gradient);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: var(--shadow-glow);
+    transform: scale(1.08);
+}
+
+.stepper-step.completed .step-circle {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: var(--brand-emerald);
+}
+
+.step-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.step-number {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.stepper-step.active .step-number {
+    color: var(--brand-primary);
+}
+
+.step-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.stepper-line {
+    flex: 1;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0 16px;
+    border-radius: 2px;
+    transition: all var(--transition-base);
+}
+
+.stepper-line.completed {
+    background: var(--brand-gradient);
+}
+
+/* Order Progress Timeline (Success view) */
+.order-progress-track {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.progress-point {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    min-width: 70px;
+    text-align: center;
+}
+
+.progress-point .point-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #141724;
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.progress-point .point-dot .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.progress-point.done {
+    color: var(--brand-emerald);
+}
+
+.progress-point.done .point-dot {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: var(--brand-emerald);
+}
+
+.progress-point.current {
+    color: var(--brand-primary);
+    font-weight: 700;
+}
+
+.progress-point.current .point-dot {
+    background: var(--brand-gradient);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255, 107, 43, 0.5);
+}
+
+.progress-connector {
+    flex: 1;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.08);
+    min-width: 20px;
+    margin: 0 4px;
+    margin-bottom: 24px;
+}
+
+.progress-connector.done {
+    background: var(--brand-emerald);
+}
+
+/* ==========================================================================
+   FLOATING WHATSAPP BUTTON
+   ========================================================================== */
+.floating-whatsapp-btn {
+    position: fixed;
+    bottom: 28px;
+    left: 28px;
+    z-index: 999;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #25D366;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45), 0 0 15px rgba(37, 211, 102, 0.3);
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+    animation: wa-pulse-ring 2.5s infinite;
+}
+
+.floating-whatsapp-btn:hover {
+    transform: scale(1.1) translateY(-3px);
+    box-shadow: 0 10px 25px rgba(37, 211, 102, 0.6), 0 0 25px rgba(37, 211, 102, 0.5);
+    color: #ffffff;
+}
+
+.floating-whatsapp-btn:active {
+    transform: scale(0.94);
+}
+
+.floating-whatsapp-tooltip {
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-6px);
+    background: #0f121d;
+    color: #ffffff;
+    padding: 7px 14px;
+    border-radius: var(--radius-full);
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    border: 1px solid rgba(37, 211, 102, 0.4);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.floating-whatsapp-btn:hover .floating-whatsapp-tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+@keyframes wa-pulse-ring {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.6);
+    }
+    70% {
+        box-shadow: 0 0 0 14px rgba(37, 211, 102, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+    }
+}
+
+/* ==========================================================================
+   GLOBAL CLICK ANIMATIONS & FLUIDITY
+   ========================================================================== */
+.btn:active, .botao:active,
+.btn-icon:active,
+.qty-btn:active,
+.cart-remove-btn:active,
+.tab-btn:active,
+.auth-tab-btn:active,
+.admin-tab:active,
+.payment-method-card:active {
+    transform: scale(0.96) !important;
+}
+
+.glass-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.feature-box {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feature-box:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.product-card {
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 107, 43, 0.2);
+}
+
+/* Ripple click effect */
+.click-ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple-anim 0.55s ease-out;
+    background: rgba(255, 255, 255, 0.35);
+    pointer-events: none;
+}
+
+@keyframes ripple-anim {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .order-stepper {
+        padding: 12px 16px;
+    }
+    .step-name {
+        display: none;
+    }
+    .stepper-line {
+        margin: 0 8px;
+    }
+    .floating-whatsapp-btn {
+        bottom: 18px;
+        left: 18px;
+        width: 48px;
+        height: 48px;
+    }
+    .status-cell-aligned {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
     }
 }
