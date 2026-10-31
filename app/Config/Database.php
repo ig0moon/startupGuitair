@@ -37,10 +37,7 @@ class Database extends Config
         'charset'      => 'utf8mb4',
         'DBCollat'     => 'utf8mb4_general_ci',
         'swapPre'      => '',
-        'encrypt'      => env('database.default.encrypt', false) ? [
-            'ssl_ca'     => env('database.default.ssl_ca', '/etc/ssl/certs/ca-certificates.crt'),
-            'ssl_verify' => env('database.default.ssl_verify', true),
-        ] : false,
+        'encrypt'      => false,
         'compress'     => false,
         'strictOn'     => false,
         'failover'     => [],
@@ -196,6 +193,14 @@ class Database extends Config
     public function __construct()
     {
         parent::__construct();
+
+        // Configuração de SSL para conexões que exigem certificado (como TiDB Cloud)
+        if (env('database.default.encrypt', false)) {
+            $this->default['encrypt'] = [
+                'ssl_ca'     => env('database.default.ssl_ca', '/etc/ssl/certs/ca-certificates.crt'),
+                'ssl_verify' => env('database.default.ssl_verify', true),
+            ];
+        }
 
         // Ensure that we always set the database group to 'tests' if
         // we are currently running an automated test suite, so that
