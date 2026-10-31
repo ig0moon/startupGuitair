@@ -11,8 +11,10 @@ $currentUser = session('user');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($pageTitle ?? 'GuitAIr - Instrumentos Musicais Inteligentes com IA') ?></title>
     
-    <!-- Favicon -->
-    <link rel="icon" href="<?= base_url('favicon.ico') ?>" type="image/x-icon">
+    <!-- Favicon Moderno (SVG + ICO Multi-res + PNG) -->
+    <link rel="icon" href="<?= base_url('favicon.svg') ?>" type="image/svg+xml">
+    <link rel="icon" href="<?= base_url('favicon.ico') ?>" type="image/x-icon" sizes="any">
+    <link rel="apple-touch-icon" href="<?= base_url('favicon.png') ?>">
     
     <!-- Google Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
