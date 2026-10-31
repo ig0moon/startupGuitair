@@ -37,7 +37,10 @@ class Database extends Config
         'charset'      => 'utf8mb4',
         'DBCollat'     => 'utf8mb4_general_ci',
         'swapPre'      => '',
-        'encrypt'      => false,
+        'encrypt'      => env('database.default.encrypt', false) ? [
+            'ssl_ca'     => env('database.default.ssl_ca', '/etc/ssl/certs/ca-certificates.crt'),
+            'ssl_verify' => env('database.default.ssl_verify', true),
+        ] : false,
         'compress'     => false,
         'strictOn'     => false,
         'failover'     => [],

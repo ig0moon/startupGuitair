@@ -4,8 +4,10 @@ FROM php:8.2-apache
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
+    ca-certificates \
     libicu-dev \
     libzip-dev \
+    && update-ca-certificates \
     && docker-php-ext-install intl pdo pdo_mysql mysqli zip \
     && rm -rf /var/lib/apt/lists/*
 
