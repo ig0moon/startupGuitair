@@ -47,16 +47,6 @@
 
 <div class="container">
 
-    <!-- BANNERS SHOWCASE -->
-    <div class="hero-banners">
-        <div class="banner-card">
-            <img src="<?= base_url('img/banner_guitair.png') ?>" alt="GuitAIr Performance Banner" loading="lazy">
-        </div>
-        <div class="banner-card">
-            <img src="<?= base_url('img/banner_guitair2.png') ?>" alt="GuitAIr Studio Banner" loading="lazy">
-        </div>
-    </div>
-
     <!-- VALUE PROPOSITIONS -->
     <div class="features-grid">
         <div class="feature-box">
@@ -163,33 +153,6 @@
             <?php endforeach; ?>
         </div>
     </section>
-
-    <!-- GUITAIR ECOSYSTEM BANNER -->
-    <div class="campaign-card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(24, 27, 40, 0.85) 100%); border-color: rgba(139, 92, 246, 0.35);">
-        <div class="campaign-content">
-            <div class="campaign-badge" style="background: rgba(139, 92, 246, 0.2); border-color: rgba(139, 92, 246, 0.4); color: #c4b5fd;">
-                <span class="material-symbols-outlined" style="font-size: 16px;">phone_iphone</span>
-                ECOSSISTEMA CONECTADO
-            </div>
-            <h2 class="campaign-title">Aplicativo <span class="gradientCyan">GuitAIr Studio</span></h2>
-            <p class="campaign-desc">
-                Sincronize seu instrumento via Bluetooth 5.3 de baixíssima latência. Baixe novos timbres analógicos simulados por redes neurais, visualize tablaturas interativas com guia luminoso e acompanhe sua evolução técnica em tempo real.
-            </p>
-            <div style="display: flex; gap: 14px; flex-wrap: wrap;">
-                <a href="<?= base_url('sobre') ?>" class="btn btn-primary btn-sm">
-                    <span class="material-symbols-outlined">explore</span>
-                    Conhecer a Tecnologia
-                </a>
-                <a href="<?= base_url('produtos') ?>" class="btn btn-secondary btn-sm">
-                    <span class="material-symbols-outlined">shopping_cart</span>
-                    Ver Instrumentos
-                </a>
-            </div>
-        </div>
-        <div class="campaign-image-wrap">
-            <img src="<?= base_url('img/banner_guitair.png') ?>" alt="GuitAIr App Ecosystem" style="border-radius: var(--radius-lg); max-height: 280px; object-fit: cover;" loading="lazy">
-        </div>
-    </div>
 
 </div>
 

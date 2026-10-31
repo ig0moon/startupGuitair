@@ -29,7 +29,27 @@ class App extends BaseConfig
      *
      * @var list<string>
      */
-    public array $allowedHostnames = ['startupguitair.test', 'localhost'];
+    public array $allowedHostnames = [];
+
+    /**
+     * Detecta o baseURL dinamicamente (funciona em startupguitair.test,
+     * localhost/startupGuitair/ ou qualquer hospedagem).
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        if (PHP_SAPI !== 'cli' && ! empty($_SERVER['HTTP_HOST'])) {
+            $https  = (! empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+                || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+            $scheme = $https ? 'https' : 'http';
+            // Diretório do public/index.php relativo à raiz web
+            $dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/'));
+            $dir = preg_replace('#/public$#', '', rtrim($dir, '/'));
+
+            $this->baseURL = $scheme . '://' . $_SERVER['HTTP_HOST'] . $dir . '/';
+        }
+    }
 
     /**
      * --------------------------------------------------------------------------
