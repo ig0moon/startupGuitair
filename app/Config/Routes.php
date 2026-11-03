@@ -51,6 +51,3 @@ $routes->post('admin/alterar-status-pedido', 'Admin::updateOrderStatus');
 // Redirecionamentos de rotas antigas
 $routes->addRedirect('maio-laranja', '/');
 $routes->addRedirect('orangemay.php', '/');
-
-// Rota de Diagnostico de Banco de Dados
-$routes->get('test-db', 'TestDb::index');
