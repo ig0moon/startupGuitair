@@ -26,18 +26,16 @@ class TestDb extends BaseController
         echo " - Encrypt (SSL): " . print_r($dbConfig['encrypt'] ?? false, true) . "\n\n";
 
         echo "Variáveis de ambiente brutas detectadas:\n";
-        $envKeys = [
-            'database.default.hostname', 'database_default_hostname',
-            'database.default.database', 'database_default_database',
-            'database.default.username', 'database_default_username',
-            'database.default.port', 'database_default_port',
-            'database.default.encrypt', 'database_default_encrypt',
-            'database.default.ssl_ca', 'database_default_ssl_ca',
-        ];
-        foreach ($envKeys as $key) {
-            $val = getenv($key) ?: (isset($_ENV[$key]) ? $_ENV[$key] : null);
-            if ($val !== null) {
-                echo " - {$key}: {$val}\n";
+        echo " - Todas as chaves em \$_SERVER:\n";
+        foreach ($_SERVER as $k => $v) {
+            if (stripos($k, 'data') !== false || stripos($k, 'db') !== false || stripos($k, 'tidb') !== false || stripos($k, 'host') !== false) {
+                echo "   {$k} = " . (stripos($k, 'pass') !== false ? '******' : $v) . "\n";
+            }
+        }
+        echo " - Todas as chaves em \$_ENV:\n";
+        foreach ($_ENV as $k => $v) {
+            if (stripos($k, 'data') !== false || stripos($k, 'db') !== false || stripos($k, 'tidb') !== false || stripos($k, 'host') !== false) {
+                echo "   {$k} = " . (stripos($k, 'pass') !== false ? '******' : $v) . "\n";
             }
         }
         echo "\n";

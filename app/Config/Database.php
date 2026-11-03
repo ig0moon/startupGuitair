@@ -194,11 +194,40 @@ class Database extends Config
     {
         parent::__construct();
 
+        // Mapeamento dinâmico: suporta tanto variáveis padrão simples (DB_HOST, etc.)
+        // quanto as variáveis estendidas do CodeIgniter no Render/Docker
+        $host = getenv('DB_HOST') ?: getenv('database_default_hostname') ?: env('database.default.hostname');
+        if ($host) {
+            $this->default['hostname'] = $host;
+        }
+
+        $user = getenv('DB_USER') ?: getenv('database_default_username') ?: env('database.default.username');
+        if ($user) {
+            $this->default['username'] = $user;
+        }
+
+        $pass = getenv('DB_PASS') ?: getenv('database_default_password') ?: env('database.default.password');
+        if ($pass !== false && $pass !== null && $pass !== '') {
+            $this->default['password'] = $pass;
+        }
+
+        $dbname = getenv('DB_NAME') ?: getenv('database_default_database') ?: env('database.default.database');
+        if ($dbname) {
+            $this->default['database'] = $dbname;
+        }
+
+        $port = getenv('DB_PORT') ?: getenv('database_default_port') ?: env('database.default.port');
+        if ($port) {
+            $this->default['port'] = (int)$port;
+        }
+
         // Configuração de SSL para conexões que exigem certificado (como TiDB Cloud)
-        if (env('database.default.encrypt', false)) {
+        $encrypt = getenv('DB_ENCRYPT') ?: getenv('database_default_encrypt') ?: env('database.default.encrypt', false);
+        if ($encrypt && $encrypt !== 'false' && $encrypt !== '0') {
+            $sslCa = getenv('DB_SSL_CA') ?: getenv('database_default_ssl_ca') ?: env('database.default.ssl_ca', '/etc/ssl/certs/ca-certificates.crt');
             $this->default['encrypt'] = [
-                'ssl_ca'     => env('database.default.ssl_ca', '/etc/ssl/certs/ca-certificates.crt'),
-                'ssl_verify' => env('database.default.ssl_verify', true),
+                'ssl_ca'     => $sslCa,
+                'ssl_verify' => true,
             ];
         }
 

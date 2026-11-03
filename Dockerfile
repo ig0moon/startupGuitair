@@ -19,8 +19,10 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Habilita módulo rewrite
-RUN a2enmod rewrite
+# Habilita módulo rewrite e garante que variáveis de ambiente do Docker/Render passem para o PHP
+RUN a2enmod rewrite \
+    && echo "PassEnv DB_HOST DB_USER DB_PASS DB_NAME DB_PORT database_default_hostname database_default_username database_default_password database_default_database database_default_port CI_ENVIRONMENT" > /etc/apache2/conf-available/environment.conf \
+    && a2enconf environment
 
 # 4. Copia os arquivos da aplicação
 WORKDIR /var/www/html
