@@ -44,6 +44,10 @@ $routes->get('help.php', 'Help::index');
 // Painel Administrativo (Acesso restrito por role no MySQL)
 $routes->get('admin', 'Admin::index');
 $routes->post('admin/alterar-funcao', 'Admin::changeRole');
+$routes->get('admin/produtos', 'Admin::products');
+$routes->post('admin/produtos/salvar', 'Admin::saveProduct');
+$routes->post('admin/produtos/atualizar', 'Admin::updateProduct');
+$routes->post('admin/produtos/excluir', 'Admin::deleteProduct');
 $routes->get('admin/compras-usuarios', 'Admin::userPurchases');
 $routes->get('admin/pedidos', 'Admin::orders');
 $routes->post('admin/alterar-status-pedido', 'Admin::updateOrderStatus');

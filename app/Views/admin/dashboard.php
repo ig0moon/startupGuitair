@@ -5,7 +5,7 @@
     <!-- Admin Header & Tabs -->
     <div class="admin-header">
         <div>
-            <div class="badge badge-cyan" style="margin-bottom: 8px;">ADMINISTRAÇÃO MYSQL</div>
+            <div class="badge badge-cyan" style="margin-bottom: 8px;">ADMINISTRAÇÃO</div>
             <h1 class="titleAI" style="text-align: left; margin: 0;">PAINEL DE <span class="gradientCyan">CONTROLE</span></h1>
         </div>
 
@@ -22,6 +22,10 @@
         <a href="<?= base_url('admin') ?>" class="admin-tab active">
             <span class="material-symbols-outlined">manage_accounts</span>
             Gestão de Usuários & Acessos
+        </a>
+        <a href="<?= base_url('admin/produtos') ?>" class="admin-tab">
+            <span class="material-symbols-outlined">inventory_2</span>
+            Gestão de Produtos
         </a>
         <a href="<?= base_url('admin/compras-usuarios') ?>" class="admin-tab">
             <span class="material-symbols-outlined">shopping_basket</span>
