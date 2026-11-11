@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\ProductModel;
+use App\Models\CouponModel;
 
 class Cart extends BaseController
 {
@@ -37,11 +38,16 @@ class Cart extends BaseController
             return redirect()->back();
         }
 
+        if ((int)($product['stock'] ?? 0) <= 0) {
+            $this->session->setFlashdata('error', 'Este produto está sem estoque no momento.');
+            return redirect()->back();
+        }
+
         $cart = $this->session->get('cart') ?? [];
         $key = (string)$product['id'];
 
         if (isset($cart[$key])) {
-            $cart[$key]['quantity'] += $quantity;
+            $cart[$key]['quantity'] = min(99, $cart[$key]['quantity'] + $quantity);
         } else {
             $cart[$key] = [
                 'id'       => $product['id'],
@@ -50,7 +56,7 @@ class Cart extends BaseController
                 'price'    => (float)$product['price'],
                 'image'    => $product['image'],
                 'tagline'  => $product['tagline'] ?? '',
-                'quantity' => $quantity,
+                'quantity' => min(99, $quantity),
             ];
         }
 
@@ -142,18 +148,24 @@ class Cart extends BaseController
     public function applyCoupon()
     {
         $code = strtoupper(trim($this->request->getPost('coupon') ?? ''));
-        $coupons = [
-            'GUITAIR10' => ['discount_percent' => 10, 'label' => '10% de desconto'],
-            'IA2026'    => ['discount_percent' => 15, 'label' => '15% de desconto de boas-vindas'],
-            'FRETEGRATIS' => ['free_shipping' => true, 'label' => 'Frete Grátis']
-        ];
 
-        if (isset($coupons[$code])) {
+        // Cupons vêm da tabela coupons (RN11): ativo e dentro da validade
+        $coupon = (new CouponModel())->findValid($code);
+
+        if ($coupon) {
+            $data = ['label' => $coupon['label']];
+            if (!empty($coupon['discount_percent'])) {
+                $data['discount_percent'] = (int)$coupon['discount_percent'];
+            }
+            if (!empty($coupon['free_shipping'])) {
+                $data['free_shipping'] = true;
+            }
+
             $this->session->set('cart_coupon', [
-                'code' => $code,
-                'data' => $coupons[$code]
+                'code' => $coupon['code'],
+                'data' => $data
             ]);
-            $this->session->setFlashdata('success', 'Cupom <strong>' . esc($code) . '</strong> aplicado com sucesso!');
+            $this->session->setFlashdata('success', 'Cupom <strong>' . esc($coupon['code']) . '</strong> aplicado com sucesso!');
         } else {
             $this->session->remove('cart_coupon');
             $this->session->setFlashdata('error', 'Cupom inválido ou expirado. Tente GUITAIR10 ou IA2026.');
@@ -184,7 +196,7 @@ class Cart extends BaseController
 
         if ($coupon) {
             if (!empty($coupon['data']['discount_percent'])) {
-                $discount = ($subtotal * ($coupon['data']['discount_percent'] / 100));
+                $discount = round($subtotal * ($coupon['data']['discount_percent'] / 100), 2);
             }
             if (!empty($coupon['data']['free_shipping'])) {
                 $shipping = 0.00;

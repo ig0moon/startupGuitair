@@ -19,7 +19,7 @@ class Products extends BaseController
         ]);
     }
 
-    public function show(string $slug): string
+    public function show(string $slug): string|\CodeIgniter\HTTP\RedirectResponse
     {
         $productModel = new ProductModel();
         $product = $productModel->findProduct($slug);

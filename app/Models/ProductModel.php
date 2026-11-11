@@ -13,9 +13,9 @@ class ProductModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'slug', 'name', 'tagline', 'category', 'price', 'old_price',
+        'slug', 'name', 'tagline', 'category_id', 'price', 'old_price',
         'image', 'badge', 'description', 'features', 'specs', 'stock',
-        'rating', 'reviews_count', 'featured'
+        'rating', 'reviews_count', 'featured', 'active'
     ];
 
     protected $useTimestamps = true;
@@ -119,21 +119,29 @@ class ProductModel extends Model
     ];
 
     /**
-     * Get all active products with graceful fallback
+     * Consulta base: só produtos ativos (RN06), com o slug da categoria
+     * disponível como "category" (as views usam $p['category']).
+     */
+    protected function activeQuery(): self
+    {
+        return $this->select('products.*, categories.slug AS category')
+                    ->join('categories', 'categories.id = products.category_id', 'left')
+                    ->where('products.active', 1);
+    }
+
+    /**
+     * Get all active products (o catálogo de reserva só entra se o banco falhar)
      */
     public function getActiveProducts(?string $category = null): array
     {
         try {
-            $builder = $this->orderBy('id', 'ASC');
+            $builder = $this->activeQuery()->orderBy('products.id', 'ASC');
             if ($category && $category !== 'todos') {
-                $builder->where('category', $category);
+                $builder->where('categories.slug', $category);
             }
-            $results = $builder->findAll();
-            if (!empty($results)) {
-                return array_map([$this, 'formatProduct'], $results);
-            }
+            return array_map([$this, 'formatProduct'], $builder->findAll());
         } catch (\Throwable $e) {
-            // DB not connected or table not created yet, use fallback
+            // Banco fora do ar ou tabelas ainda não criadas: usa o catálogo de reserva
         }
 
         $list = $this->fallbackProducts;
@@ -144,7 +152,8 @@ class ProductModel extends Model
     }
 
     /**
-     * Get single product by slug or id or color alias
+     * Get single product by slug or id or color alias.
+     * Produto inexistente ou desativado devolve null.
      */
     public function findProduct($identifier): ?array
     {
@@ -160,15 +169,14 @@ class ProductModel extends Model
         }
 
         try {
+            $builder = $this->activeQuery();
             $product = is_numeric($identifier)
-                ? $this->find($identifier)
-                : $this->where('slug', $identifier)->first();
+                ? $builder->where('products.id', (int)$identifier)->first()
+                : $builder->where('products.slug', (string)$identifier)->first();
 
-            if ($product) {
-                return $this->formatProduct($product);
-            }
+            return $product ? $this->formatProduct($product) : null;
         } catch (\Throwable $e) {
-            // Fallback
+            // Banco fora do ar: usa o catálogo de reserva
         }
 
         foreach ($this->fallbackProducts as $item) {
@@ -177,7 +185,7 @@ class ProductModel extends Model
             }
         }
 
-        return $this->fallbackProducts[0] ?? null;
+        return null;
     }
 
     protected function formatProduct(array $p): array

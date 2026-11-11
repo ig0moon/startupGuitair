@@ -72,6 +72,11 @@ class Account extends BaseController
             return redirect()->to(base_url('conta'));
         }
 
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->session->setFlashdata('error', 'Informe um e-mail válido.');
+            return redirect()->to(base_url('conta'));
+        }
+
         if (strlen($password) < 6) {
             $this->session->setFlashdata('error', 'A senha deve possuir no mínimo 6 caracteres.');
             return redirect()->to(base_url('conta'));

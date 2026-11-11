@@ -8,9 +8,9 @@ use App\Models\OrderModel;
 class Buy extends BaseController
 {
     /**
-     * Checkout page
+     * Checkout page (RN07: só usuário logado finaliza compra)
      */
-    public function index(): string
+    public function index(): string|\CodeIgniter\HTTP\RedirectResponse
     {
         $productModel = new ProductModel();
 
@@ -42,21 +42,16 @@ class Buy extends BaseController
             }
         }
 
-        // If cart is still empty, add default featured product so user can test checkout smoothly
         if (empty($cart)) {
-            $default = $productModel->findProduct(1);
-            if ($default) {
-                $cart[(string)$default['id']] = [
-                    'id'       => $default['id'],
-                    'slug'     => $default['slug'],
-                    'name'     => $default['name'],
-                    'price'    => (float)$default['price'],
-                    'image'    => $default['image'],
-                    'tagline'  => $default['tagline'] ?? '',
-                    'quantity' => 1,
-                ];
-                $this->session->set('cart', $cart);
-            }
+            $this->session->setFlashdata('error', 'Seu carrinho está vazio. Escolha um produto para continuar.');
+            return redirect()->to(base_url('produtos'));
+        }
+
+        // O carrinho fica guardado na sessão; quem não está logado entra na conta e volta.
+        $user = $this->session->get('user');
+        if (!$user) {
+            $this->session->setFlashdata('error', 'Entre na sua conta (ou crie uma) para finalizar a compra. Seu carrinho foi guardado.');
+            return redirect()->to(base_url('conta'));
         }
 
         // Calculate checkout totals
@@ -72,7 +67,7 @@ class Buy extends BaseController
 
         if ($coupon) {
             if (!empty($coupon['data']['discount_percent'])) {
-                $discount = ($subtotal * ($coupon['data']['discount_percent'] / 100));
+                $discount = round($subtotal * ($coupon['data']['discount_percent'] / 100), 2);
             }
             if (!empty($coupon['data']['free_shipping'])) {
                 $shipping = 0.00;
@@ -80,8 +75,6 @@ class Buy extends BaseController
         }
 
         $total = max(0, ($subtotal - $discount + $shipping));
-
-        $user = $this->session->get('user');
 
         return view('buy', [
             'items'     => $items,
@@ -101,54 +94,72 @@ class Buy extends BaseController
      */
     public function checkout()
     {
+        // RN07: todo pedido pertence a um usuário cadastrado
+        $user = $this->session->get('user');
+        if (!$user) {
+            $this->session->setFlashdata('error', 'Entre na sua conta para finalizar a compra.');
+            return redirect()->to(base_url('conta'));
+        }
+
         $cart = $this->session->get('cart') ?? [];
         if (empty($cart)) {
             $this->session->setFlashdata('error', 'Seu carrinho está vazio.');
             return redirect()->to(base_url('produtos'));
         }
 
-        $items = array_values($cart);
-        $subtotal = 0;
-        foreach ($items as $item) {
-            $subtotal += ($item['price'] * $item['quantity']);
-        }
+        // Nada de valores inventados: os campos obrigatórios precisam vir preenchidos
+        $post = fn(string $k): string => trim((string)$this->request->getPost($k));
 
-        $coupon = $this->session->get('cart_coupon');
-        $discount = 0;
-        $shipping = ($subtotal >= 2500) ? 0.00 : 45.00;
+        $state = strtoupper($post('estado'));
+        $payment = $post('payment_method');
 
-        if ($coupon) {
-            if (!empty($coupon['data']['discount_percent'])) {
-                $discount = ($subtotal * ($coupon['data']['discount_percent'] / 100));
-            }
-            if (!empty($coupon['data']['free_shipping'])) {
-                $shipping = 0.00;
+        $required = [
+            'nome' => 'nome', 'email' => 'e-mail', 'endereco' => 'endereço', 'numero' => 'número',
+            'bairro' => 'bairro', 'cidade' => 'cidade', 'cep' => 'CEP',
+        ];
+        foreach ($required as $field => $label) {
+            if ($post($field) === '') {
+                $this->session->setFlashdata('error', 'Preencha o campo obrigatório: ' . $label . '.');
+                return redirect()->to(base_url('comprar'));
             }
         }
+        if (!filter_var($post('email'), FILTER_VALIDATE_EMAIL)) {
+            $this->session->setFlashdata('error', 'Informe um e-mail válido.');
+            return redirect()->to(base_url('comprar'));
+        }
+        if (!preg_match('/^[A-Z]{2}$/', $state)) {
+            $this->session->setFlashdata('error', 'Informe a UF com 2 letras (ex.: PR).');
+            return redirect()->to(base_url('comprar'));
+        }
+        if (!in_array($payment, ['pix', 'credit_card', 'boleto'], true)) {
+            $this->session->setFlashdata('error', 'Escolha uma forma de pagamento válida.');
+            return redirect()->to(base_url('comprar'));
+        }
 
-        $total = max(0, ($subtotal - $discount + $shipping));
-
-        $orderData = [
-            'user_id'        => $this->session->get('user')['id'] ?? null,
-            'customer_name'  => $this->request->getPost('nome') ?? 'Cliente GuitAIr',
-            'customer_email' => $this->request->getPost('email') ?? 'cliente@exemplo.com',
-            'customer_phone' => $this->request->getPost('telefone') ?? '',
-            'address'        => $this->request->getPost('endereco') ?? 'Rua da Inovação Musical',
-            'number'         => $this->request->getPost('numero') ?? '100',
-            'complement'     => $this->request->getPost('complemento') ?? '',
-            'neighborhood'   => $this->request->getPost('bairro') ?? 'Centro',
-            'city'           => $this->request->getPost('cidade') ?? 'São Paulo',
-            'state'          => $this->request->getPost('estado') ?? 'SP',
-            'zipcode'        => $this->request->getPost('cep') ?? '01001-000',
-            'payment_method' => $this->request->getPost('payment_method') ?? 'pix',
-            'subtotal'       => $subtotal,
-            'shipping_cost'  => $shipping,
-            'discount'       => $discount,
-            'total'          => $total,
+        $customer = [
+            'user_id'        => (int)$user['id'],
+            'customer_name'  => $post('nome'),
+            'customer_email' => strtolower($post('email')),
+            'customer_phone' => $post('telefone'),
+            'address'        => $post('endereco'),
+            'number'         => $post('numero'),
+            'complement'     => $post('complemento'),
+            'neighborhood'   => $post('bairro'),
+            'city'           => $post('cidade'),
+            'state'          => $state,
+            'zipcode'        => $post('cep'),
+            'payment_method' => $payment,
         ];
 
+        // Preços, estoque e cupom são conferidos no banco, dentro da transação
+        $coupon = $this->session->get('cart_coupon');
         $orderModel = new OrderModel();
-        $result = $orderModel->createOrder($orderData, $items);
+        $result = $orderModel->createOrder($customer, array_values($cart), $coupon['code'] ?? null);
+
+        if (!$result['success']) {
+            $this->session->setFlashdata('error', $result['message']);
+            return redirect()->to(base_url('comprar'));
+        }
 
         // Clear cart
         $this->session->remove('cart');
@@ -156,11 +167,11 @@ class Buy extends BaseController
 
         // Store confirmed order in flashdata
         $this->session->setFlashdata('confirmed_order', $result['order']);
-        $this->session->setFlashdata('confirmed_items', $items);
+        $this->session->setFlashdata('confirmed_items', $result['items']);
 
         return view('buy_success', [
             'order'     => $result['order'],
-            'items'     => $items,
+            'items'     => $result['items'],
             'pageTitle' => 'GuitAIr - Pedido Confirmado com Sucesso!'
         ]);
     }

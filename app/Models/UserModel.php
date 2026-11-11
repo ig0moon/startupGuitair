@@ -26,35 +26,26 @@ class UserModel extends Model
      */
     public function findByEmail(string $email): ?array
     {
-        try {
-            return $this->where('email', strtolower(trim($email)))->first();
-        } catch (\Throwable $e) {
-            // If DB is offline, check demo users in session or memory
-            $simulatedUsers = session('simulated_users') ?? [
-                'demo@guitair.com.br' => [
-                    'id'            => 1,
-                    'name'          => 'Usuário Demo',
-                    'email'         => 'demo@guitair.com.br',
-                    'password_hash' => password_hash('123456', PASSWORD_DEFAULT),
-                    'role'          => 'user',
-                    'created_at'    => date('Y-m-d H:i:s')
-                ]
-            ];
-            return $simulatedUsers[strtolower(trim($email))] ?? null;
-        }
+        return $this->where('email', strtolower(trim($email)))->first();
     }
 
     /**
-     * Create user (DB or fallback to session)
+     * Cria o usuário (RN01: e-mail único e com formato válido).
+     * Se o banco recusar o dado, o erro é devolvido; nada é simulado na sessão.
      */
     public function registerUser(array $data): array
     {
-        $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
+        $email = strtolower(trim($data['email']));
+
+        if ($this->findByEmail($email)) {
+            return ['success' => false, 'message' => 'Este e-mail já está cadastrado.'];
+        }
+
         $userRecord = [
             'name'          => trim($data['name']),
-            'email'         => strtolower(trim($data['email'])),
-            'password_hash' => $passwordHash,
-            'phone'         => $data['phone'] ?? null,
+            'email'         => $email,
+            'password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
+            'phone'         => !empty($data['phone']) ? $data['phone'] : null,
             'role'          => 'user',
             'created_at'    => date('Y-m-d H:i:s'),
             'updated_at'    => date('Y-m-d H:i:s'),
@@ -62,20 +53,18 @@ class UserModel extends Model
 
         try {
             $insertedId = $this->insert($userRecord, true);
-            $userRecord['id'] = $insertedId;
-            return ['success' => true, 'user' => $userRecord];
         } catch (\Throwable $e) {
-            // Store in session if DB isn't connected yet
-            $simulatedUsers = session('simulated_users') ?? [];
-            if (isset($simulatedUsers[$userRecord['email']])) {
-                return ['success' => false, 'message' => 'Este e-mail já está cadastrado.'];
-            }
-            $userRecord['id'] = count($simulatedUsers) + 10;
-            $simulatedUsers[$userRecord['email']] = $userRecord;
-            session()->set('simulated_users', $simulatedUsers);
-
-            return ['success' => true, 'user' => $userRecord, 'simulated' => true];
+            log_message('error', 'Falha ao cadastrar usuário: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Não foi possível cadastrar. Confira os dados e tente novamente.'];
         }
+
+        if (!$insertedId) {
+            return ['success' => false, 'message' => 'Não foi possível cadastrar. Confira os dados e tente novamente.'];
+        }
+
+        $userRecord['id'] = $insertedId;
+        unset($userRecord['password_hash']);
+        return ['success' => true, 'user' => $userRecord];
     }
 
     /**

@@ -12,6 +12,15 @@ class Admin extends BaseController
     }
 
     /**
+     * Devolve o id da categoria pelo slug (RN05) ou null se não existir.
+     */
+    protected function findCategoryId(string $slug): ?int
+    {
+        $row = $this->db->table('categories')->select('id')->where('slug', $slug)->get()->getRowArray();
+        return $row ? (int)$row['id'] : null;
+    }
+
+    /**
      * Check if currently logged in user has admin role in database via Query Builder
      */
     protected function checkAdminAccess()
@@ -251,7 +260,13 @@ class Admin extends BaseController
 
         $products = [];
         try {
-            $products = $this->db->table('products')->orderBy('id', 'DESC')->get()->getResultArray();
+            $products = $this->db->table('products')
+                                 ->select('products.*, categories.slug AS category')
+                                 ->join('categories', 'categories.id = products.category_id', 'left')
+                                 ->where('products.active', 1)
+                                 ->orderBy('products.id', 'DESC')
+                                 ->get()
+                                 ->getResultArray();
             foreach ($products as &$p) {
                 if (is_string($p['features'] ?? null)) {
                     $p['features'] = json_decode($p['features'], true) ?: [];
@@ -290,6 +305,10 @@ class Admin extends BaseController
         }
 
         $category = trim((string)$this->request->getPost('category')) ?: 'guitarra';
+        $categoryId = $this->findCategoryId($category);
+        if (!$categoryId) {
+            return redirect()->back()->with('error', 'Categoria inválida.');
+        }
         $tagline = trim((string)$this->request->getPost('tagline')) ?: 'Instrumento musical inteligente com inteligência artificial embarcada.';
         
         // Clean price
@@ -385,7 +404,7 @@ class Admin extends BaseController
             'slug'          => $slug,
             'name'          => $name,
             'tagline'       => $tagline,
-            'category'      => $category,
+            'category_id'   => $categoryId,
             'price'         => $price,
             'old_price'     => $oldPrice,
             'image'         => $imagePath,
@@ -431,7 +450,13 @@ class Admin extends BaseController
             return redirect()->back()->with('error', 'O nome do produto é obrigatório.');
         }
 
-        $category = trim((string)$this->request->getPost('category')) ?: $existingProduct['category'];
+        $categorySlug = trim((string)$this->request->getPost('category'));
+        $categoryId = $categorySlug !== ''
+            ? $this->findCategoryId($categorySlug)
+            : (int)$existingProduct['category_id'];
+        if (!$categoryId) {
+            return redirect()->back()->with('error', 'Categoria inválida.');
+        }
         $tagline = trim((string)$this->request->getPost('tagline')) ?: $existingProduct['tagline'];
 
         // Clean price
@@ -523,7 +548,7 @@ class Admin extends BaseController
             'slug'        => $slug,
             'name'        => $name,
             'tagline'     => $tagline,
-            'category'    => $category,
+            'category_id' => $categoryId,
             'price'       => $price,
             'old_price'   => $oldPrice,
             'image'       => $imagePath,
@@ -559,8 +584,13 @@ class Admin extends BaseController
         try {
             $product = $this->db->table('products')->where('id', $productId)->get()->getRowArray();
             if ($product) {
-                $this->db->table('products')->where('id', $productId)->delete();
-                return redirect()->to(base_url('admin/produtos'))->with('success', 'Produto "' . esc($product['name']) . '" removido com sucesso!');
+                // RN06: o produto é desativado, não apagado; o histórico de vendas continua
+                $this->db->table('products')->where('id', $productId)->update([
+                    'active'     => 0,
+                    'featured'   => 0,
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+                return redirect()->to(base_url('admin/produtos'))->with('success', 'Produto "' . esc($product['name']) . '" removido do catálogo!');
             }
             return redirect()->back()->with('error', 'Produto não encontrado.');
         } catch (\Throwable $e) {

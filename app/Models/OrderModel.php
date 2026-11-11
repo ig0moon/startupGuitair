@@ -15,7 +15,7 @@ class OrderModel extends Model
         'order_number', 'user_id', 'customer_name', 'customer_email',
         'customer_phone', 'address', 'number', 'complement', 'neighborhood',
         'city', 'state', 'zipcode', 'payment_method', 'subtotal',
-        'shipping_cost', 'discount', 'total', 'status'
+        'shipping_cost', 'discount', 'coupon_id', 'address_id', 'total', 'status'
     ];
 
     protected $useTimestamps = true;
@@ -24,96 +24,242 @@ class OrderModel extends Model
     protected $updatedField  = 'updated_at';
 
     /**
-     * Create order with strictly sequential number (GT-0001, GT-0002, etc.) using Query Builder
+     * Cria o pedido inteiro dentro de UMA transação: pedido, número, itens,
+     * baixa de estoque e endereço entram juntos ou nenhum entra.
+     *
+     * - RN07: o pedido sempre pertence a um usuário.
+     * - Os preços vêm do banco (products), nunca da sessão.
+     * - O estoque é conferido e baixado (RN04).
+     * - O cupom é conferido na tabela coupons (RN11).
+     *
+     * @param array $customer  user_id, customer_name, customer_email, customer_phone,
+     *                         address, number, complement, neighborhood, city, state,
+     *                         zipcode, payment_method
+     * @param array $cartItems itens do carrinho (id, quantity, image, ...)
+     * @return array ['success' => bool, 'order' => array, 'items' => array] ou
+     *               ['success' => false, 'message' => string]
      */
-    public function createOrder(array $orderData, array $items): array
+    public function createOrder(array $customer, array $cartItems, ?string $couponCode = null): array
     {
-        $db = \Config\Database::connect();
-        $orderData['status'] = 'pending';
-        $orderData['created_at'] = date('Y-m-d H:i:s');
-        $orderData['updated_at'] = date('Y-m-d H:i:s');
-        $orderData['order_number'] = 'GERANDO...';
+        $userId = (int)($customer['user_id'] ?? 0);
+        if ($userId <= 0) {
+            return ['success' => false, 'message' => 'É preciso estar logado para finalizar a compra.'];
+        }
+        if (empty($cartItems)) {
+            return ['success' => false, 'message' => 'Seu carrinho está vazio.'];
+        }
 
+        $db  = \Config\Database::connect();
+        $now = date('Y-m-d H:i:s');
+
+        $db->transBegin();
         try {
-            // 1. Insert order using Query Builder
-            $ordersBuilder = $db->table('orders');
-            $ordersBuilder->insert($orderData);
-            $orderId = $db->insertID();
+            // 1. Itens: preço, nome e estoque vêm do banco, com a linha travada
+            $lines    = [];
+            $subtotal = 0.0;
+            foreach ($cartItems as $item) {
+                $productId = (int)($item['id'] ?? 0);
+                $qty       = max(1, min(99, (int)($item['quantity'] ?? 1)));
 
-            // 2. Generate strictly sequential order number
-            $seqNumber = sprintf('GT-%04d', $orderId);
-            $ordersBuilder->where('id', $orderId)->update(['order_number' => $seqNumber]);
-            $orderData['id'] = $orderId;
-            $orderData['order_number'] = $seqNumber;
+                $product = $this->exec($db, $db->query(
+                    'SELECT id, name, price, stock FROM products WHERE id = ? AND active = 1 FOR UPDATE',
+                    [$productId]
+                ))->getRowArray();
 
-            // 3. Insert items via Query Builder
-            $itemsBuilder = $db->table('order_items');
-            foreach ($items as $item) {
-                $itemsBuilder->insert([
-                    'order_id'     => $orderId,
-                    'product_id'   => $item['id'] ?? null,
-                    'product_name' => $item['name'] ?? 'Produto GuitAIr',
-                    'price'        => $item['price'],
-                    'quantity'     => $item['quantity'] ?? 1,
-                    'subtotal'     => ($item['price'] * ($item['quantity'] ?? 1)),
-                    'created_at'   => date('Y-m-d H:i:s')
+                if (!$product) {
+                    throw new \DomainException('Um dos produtos do carrinho não está mais disponível.');
+                }
+                if ((int)$product['stock'] < $qty) {
+                    throw new \DomainException(
+                        'Estoque insuficiente para "' . $product['name'] . '" (restam ' . (int)$product['stock'] . ').'
+                    );
+                }
+
+                $price      = (float)$product['price'];
+                $lineTotal  = round($price * $qty, 2);
+                $subtotal  += $lineTotal;
+                $lines[]    = array_merge($item, [
+                    'id'       => (int)$product['id'],
+                    'name'     => $product['name'],
+                    'price'    => $price,
+                    'quantity' => $qty,
+                    'subtotal' => $lineTotal,
                 ]);
             }
+            $subtotal = round($subtotal, 2);
 
-            return ['success' => true, 'order' => $orderData];
-        } catch (\Throwable $e) {
-            // Fallback for session
-            $simulatedCount = count(session('user_orders') ?? []) + 1;
-            $orderData['id'] = $simulatedCount;
-            $orderData['order_number'] = sprintf('GT-%04d', $simulatedCount);
+            // 2. Frete e cupom (RN09, RN11)
+            $shipping = ($subtotal >= 2500) ? 0.00 : 45.00;
+            $discount = 0.00;
+            $couponId = null;
 
-            $userOrders = session('user_orders') ?? [];
-            $userOrders[] = [
-                'order' => $orderData,
-                'items' => $items
+            if ($couponCode !== null && $couponCode !== '') {
+                $coupon = (new CouponModel())->findValid($couponCode);
+                if (!$coupon) {
+                    throw new \DomainException('Cupom inválido ou expirado.');
+                }
+                $couponId = (int)$coupon['id'];
+                if (!empty($coupon['discount_percent'])) {
+                    $discount = round($subtotal * ((int)$coupon['discount_percent'] / 100), 2);
+                }
+                if (!empty($coupon['free_shipping'])) {
+                    $shipping = 0.00;
+                }
+            }
+            $discount = min($discount, $subtotal);
+            $total    = round($subtotal + $shipping - $discount, 2);
+
+            // 3. Endereço salvo do usuário (v1.3); o pedido guarda também uma cópia
+            $addressId = $this->saveAddress($db, $userId, $customer, $now);
+
+            // 4. Pedido (número provisório único; o definitivo usa o id)
+            $order = [
+                'order_number'   => 'TMP-' . bin2hex(random_bytes(8)),
+                'user_id'        => $userId,
+                'customer_name'  => $customer['customer_name'],
+                'customer_email' => $customer['customer_email'],
+                'customer_phone' => $customer['customer_phone'] ?: null,
+                'address'        => $customer['address'],
+                'number'         => $customer['number'],
+                'complement'     => $customer['complement'] ?: null,
+                'neighborhood'   => $customer['neighborhood'],
+                'city'           => $customer['city'],
+                'state'          => $customer['state'],
+                'zipcode'        => $customer['zipcode'],
+                'payment_method' => $customer['payment_method'],
+                'subtotal'       => $subtotal,
+                'shipping_cost'  => $shipping,
+                'discount'       => $discount,
+                'coupon_id'      => $couponId,
+                'address_id'     => $addressId,
+                'total'          => $total,
+                'status'         => 'pending',
+                'created_at'     => $now,
+                'updated_at'     => $now,
             ];
-            session()->set('user_orders', $userOrders);
+            $this->exec($db, $db->table('orders')->insert($order));
+            $orderId = (int)$db->insertID();
 
-            return ['success' => true, 'order' => $orderData, 'simulated' => true];
+            $orderNumber = sprintf('GT-%04d', $orderId);
+            $this->exec($db, $db->table('orders')->where('id', $orderId)->update(['order_number' => $orderNumber]));
+            $order['id']           = $orderId;
+            $order['order_number'] = $orderNumber;
+
+            // 5. Itens e baixa de estoque (RN04, RN06, RN10)
+            foreach ($lines as $line) {
+                $this->exec($db, $db->table('order_items')->insert([
+                    'order_id'     => $orderId,
+                    'product_id'   => $line['id'],
+                    'product_name' => $line['name'],
+                    'price'        => $line['price'],
+                    'quantity'     => $line['quantity'],
+                    'subtotal'     => $line['subtotal'],
+                    'created_at'   => $now,
+                ]));
+
+                $this->exec($db, $db->query(
+                    'UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?',
+                    [$line['quantity'], $line['id'], $line['quantity']]
+                ));
+                if ($db->affectedRows() !== 1) {
+                    throw new \DomainException('Estoque insuficiente para "' . $line['name'] . '".');
+                }
+            }
+
+            $db->transCommit();
+            return ['success' => true, 'order' => $order, 'items' => $lines];
+        } catch (\DomainException $e) {
+            $db->transRollback();
+            return ['success' => false, 'message' => $e->getMessage()];
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Falha ao criar pedido: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Não foi possível concluir o pedido. Tente novamente.'];
         }
     }
 
     /**
-     * Get orders for a given user using Query Builder
+     * Guarda o endereço do checkout na tabela addresses (se ainda não existir).
+     * O primeiro endereço do usuário vira o principal (RN12).
+     * Falha aqui não derruba o pedido: o pedido guarda a própria cópia.
+     */
+    protected function saveAddress($db, int $userId, array $c, string $now): ?int
+    {
+        if (!preg_match('/^[A-Z]{2}$/', (string)$c['state'])) {
+            return null;
+        }
+
+        try {
+            $existing = $db->query(
+                'SELECT id FROM addresses WHERE user_id = ? AND zipcode = ? AND street = ? AND number = ? LIMIT 1',
+                [$userId, $c['zipcode'], $c['address'], $c['number']]
+            )->getRowArray();
+            if ($existing) {
+                return (int)$existing['id'];
+            }
+
+            $hasAny = (int)($db->query('SELECT COUNT(*) AS n FROM addresses WHERE user_id = ?', [$userId])
+                               ->getRowArray()['n'] ?? 0);
+
+            $ok = $db->table('addresses')->insert([
+                'user_id'      => $userId,
+                'zipcode'      => $c['zipcode'],
+                'street'       => $c['address'],
+                'number'       => $c['number'],
+                'complement'   => $c['complement'] ?: null,
+                'neighborhood' => $c['neighborhood'],
+                'city'         => $c['city'],
+                'state'        => $c['state'],
+                'is_primary'   => $hasAny === 0 ? 1 : 0,
+                'created_at'   => $now,
+            ]);
+
+            return $ok ? (int)$db->insertID() : null;
+        } catch (\Throwable $e) {
+            log_message('error', 'Falha ao salvar endereço: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Lança exceção se a consulta falhou (quando DBDebug está desligado o
+     * CodeIgniter devolve false em vez de lançar).
+     */
+    protected function exec($db, $result)
+    {
+        if ($result === false) {
+            $err = $db->error();
+            throw new \RuntimeException($err['message'] ?? 'Erro no banco de dados.');
+        }
+        return $result;
+    }
+
+    /**
+     * Pedidos de um usuário (RN07: todo pedido tem usuário).
      */
     public function getUserOrders(?int $userId, ?string $email = null): array
     {
-        try {
-            $db = \Config\Database::connect();
-            $builder = $db->table('orders');
-            $builder->orderBy('id', 'DESC');
-
-            if ($userId) {
-                $builder->where('user_id', $userId);
-            } elseif ($email) {
-                $builder->where('customer_email', $email);
-            }
-
-            $orders = $builder->get()->getResultArray();
-
-            // Attach items to each order using Query Builder
-            foreach ($orders as &$ord) {
-                $itemsBuilder = $db->table('order_items');
-                $itemsBuilder->select('order_items.*, products.image');
-                $itemsBuilder->join('products', 'products.id = order_items.product_id', 'left');
-                $itemsBuilder->where('order_items.order_id', $ord['id']);
-                $ord['items'] = $itemsBuilder->get()->getResultArray();
-            }
-
-            return $orders;
-        } catch (\Throwable $e) {
-            $stored = session('user_orders') ?? [];
-            return array_map(function($entry) {
-                $o = $entry['order'];
-                $o['items'] = $entry['items'];
-                return $o;
-            }, $stored);
+        if (!$userId) {
+            return [];
         }
+
+        $db = \Config\Database::connect();
+        $orders = $db->table('orders')
+                     ->where('user_id', $userId)
+                     ->orderBy('id', 'DESC')
+                     ->get()
+                     ->getResultArray();
+
+        foreach ($orders as &$ord) {
+            $ord['items'] = $db->table('order_items')
+                               ->select('order_items.*, products.image')
+                               ->join('products', 'products.id = order_items.product_id', 'left')
+                               ->where('order_items.order_id', $ord['id'])
+                               ->get()
+                               ->getResultArray();
+        }
+
+        return $orders;
     }
 
     /**
