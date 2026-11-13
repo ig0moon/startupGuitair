@@ -14,6 +14,7 @@ $routes->get('about.php', 'About::index');
 $routes->get('produtos', 'Products::index');
 $routes->get('produtos/(:segment)', 'Products::show/$1');
 $routes->get('prod.php', 'Products::index');
+$routes->post('produtos/avaliar', 'Reviews::save');
 
 // Compra & Checkout
 $routes->match(['GET', 'POST'], 'comprar', 'Buy::index');

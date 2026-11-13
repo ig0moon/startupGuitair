@@ -96,11 +96,16 @@
 
                         <img src="<?= base_url($prod['image']) ?>" alt="<?= esc($prod['name']) ?>" loading="lazy">
 
-                        <div class="product-rating">
-                            <span class="star">★</span>
-                            <span><?= esc($prod['rating'] ?? '4.9') ?></span>
-                            <span style="color: var(--text-muted); font-size: 0.75rem;">(<?= esc($prod['reviews_count'] ?? '35') ?>)</span>
-                        </div>
+                        <a href="<?= base_url('produtos/' . $prod['slug']) ?>#avaliacoes" class="product-rating" style="text-decoration: none;" title="Ver avaliações">
+                            <?php if ((int)($prod['reviews_count'] ?? 0) > 0): ?>
+                                <span class="star">★</span>
+                                <span><?= esc(number_format((float)$prod['rating'], 1, ',', '')) ?></span>
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">(<?= (int)$prod['reviews_count'] ?>)</span>
+                            <?php else: ?>
+                                <span class="star">☆</span>
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">Sem avaliações</span>
+                            <?php endif; ?>
+                        </a>
                     </div>
 
                     <div class="product-body">

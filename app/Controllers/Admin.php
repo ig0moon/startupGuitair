@@ -413,8 +413,6 @@ class Admin extends BaseController
             'features'      => json_encode($featuresList, JSON_UNESCAPED_UNICODE),
             'specs'         => json_encode($specs, JSON_UNESCAPED_UNICODE),
             'stock'         => $stock,
-            'rating'        => 5.0,
-            'reviews_count' => 0,
             'featured'      => $featured,
             'created_at'    => date('Y-m-d H:i:s'),
             'updated_at'    => date('Y-m-d H:i:s')

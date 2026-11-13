@@ -15,7 +15,7 @@ class ProductModel extends Model
     protected $allowedFields    = [
         'slug', 'name', 'tagline', 'category_id', 'price', 'old_price',
         'image', 'badge', 'description', 'features', 'specs', 'stock',
-        'rating', 'reviews_count', 'featured', 'active'
+        'featured', 'active'
     ];
 
     protected $useTimestamps = true;
@@ -124,7 +124,14 @@ class ProductModel extends Model
      */
     protected function activeQuery(): self
     {
-        return $this->select('products.*, categories.slug AS category')
+        // A nota média e a quantidade vêm da tabela reviews (RN14); produto sem
+        // avaliação fica com rating NULL e reviews_count 0.
+        return $this->select(
+                        'products.*, categories.slug AS category, '
+                        . '(SELECT ROUND(AVG(r.rating), 1) FROM reviews r WHERE r.product_id = products.id) AS rating, '
+                        . '(SELECT COUNT(*) FROM reviews r WHERE r.product_id = products.id) AS reviews_count',
+                        false
+                    )
                     ->join('categories', 'categories.id = products.category_id', 'left')
                     ->where('products.active', 1);
     }

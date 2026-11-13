@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\ProductModel;
+use App\Models\ReviewModel;
 
 class Products extends BaseController
 {
@@ -28,9 +29,15 @@ class Products extends BaseController
             return redirect()->to(base_url('produtos'));
         }
 
+        $reviewModel = new ReviewModel();
+        $user        = $this->session->get('user');
+
         return view('products', [
             'products'        => [$product],
             'selectedProduct' => $product,
+            'reviews'         => $reviewModel->forProduct((int)$product['id']),
+            'myReview'        => !empty($user['id']) ? $reviewModel->findByUser((int)$user['id'], (int)$product['id']) : null,
+            'loggedUser'      => $user,
             'currentCategory' => $product['category'] ?? 'todos',
             'pageTitle'       => 'GuitAIr - ' . esc($product['name'])
         ]);

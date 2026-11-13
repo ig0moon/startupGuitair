@@ -40,11 +40,16 @@
 
                         <img src="<?= base_url($prod['image']) ?>" alt="<?= esc($prod['name']) ?>" loading="lazy">
 
-                        <div class="product-rating">
-                            <span class="star">★</span>
-                            <span><?= esc($prod['rating'] ?? '4.9') ?></span>
-                            <span style="color: var(--text-muted); font-size: 0.75rem;">(<?= esc($prod['reviews_count'] ?? '35') ?>)</span>
-                        </div>
+                        <a href="<?= base_url('produtos/' . $prod['slug']) ?>#avaliacoes" class="product-rating" style="text-decoration: none;" title="Ver avaliações">
+                            <?php if ((int)($prod['reviews_count'] ?? 0) > 0): ?>
+                                <span class="star">★</span>
+                                <span><?= esc(number_format((float)$prod['rating'], 1, ',', '')) ?></span>
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">(<?= (int)$prod['reviews_count'] ?>)</span>
+                            <?php else: ?>
+                                <span class="star">☆</span>
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">Sem avaliações</span>
+                            <?php endif; ?>
+                        </a>
                     </div>
 
                     <div class="product-body">
@@ -118,6 +123,66 @@
             </div>
         <?php endif; ?>
     </div>
+
+    <?php if (!empty($selectedProduct)): ?>
+    <!-- Avaliações do produto (RN14) -->
+    <div class="glass-card" id="avaliacoes" style="margin: 40px 0;">
+        <h2 style="margin-bottom: 6px;">Avaliações</h2>
+        <?php $total = count($reviews ?? []); ?>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">
+            <?php if ($total > 0): ?>
+                <span class="star">★</span> <strong><?= esc(number_format((float)$selectedProduct['rating'], 1, ',', '')) ?></strong>
+                de 5 · <?= $total ?> <?= $total === 1 ? 'avaliação' : 'avaliações' ?>
+            <?php else: ?>
+                Este produto ainda não tem avaliações. Seja a primeira pessoa a avaliar!
+            <?php endif; ?>
+        </p>
+
+        <?php if (!empty($loggedUser['id'])): ?>
+            <form method="POST" action="<?= base_url('produtos/avaliar') ?>" style="margin-bottom: 32px;">
+                <?= csrf_field() ?>
+                <input type="hidden" name="product_id" value="<?= esc($selectedProduct['id']) ?>">
+                <h3 style="font-size: 1.05rem; margin-bottom: 12px;"><?= !empty($myReview) ? 'Editar sua avaliação' : 'Avaliar este produto' ?></h3>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="rating">Nota</label>
+                    <select name="rating" id="rating" class="form-control" required>
+                        <?php for ($n = 5; $n >= 1; $n--): ?>
+                            <option value="<?= $n ?>" <?= ((int)($myReview['rating'] ?? 5) === $n) ? 'selected' : '' ?>>
+                                <?= str_repeat('★', $n) . str_repeat('☆', 5 - $n) ?> (<?= $n ?>)
+                            </option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="comment">Comentário (opcional)</label>
+                    <textarea name="comment" id="comment" class="form-control" rows="3" maxlength="500" placeholder="Conte como foi sua experiência"><?= esc($myReview['comment'] ?? '') ?></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm"><?= !empty($myReview) ? 'Atualizar avaliação' : 'Publicar avaliação' ?></button>
+            </form>
+        <?php else: ?>
+            <p style="margin-bottom: 32px;">
+                <a href="<?= base_url('conta') ?>" class="btn btn-secondary btn-sm">Entre na sua conta para avaliar</a>
+            </p>
+        <?php endif; ?>
+
+        <?php foreach (($reviews ?? []) as $rev): ?>
+            <?php
+                $parts = preg_split('/\s+/', trim($rev['author']));
+                $shortName = $parts[0] . (count($parts) > 1 ? ' ' . mb_substr(end($parts), 0, 1) . '.' : '');
+            ?>
+            <div style="border-top: 1px solid var(--border-subtle); padding: 16px 0;">
+                <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                    <strong><?= esc($shortName) ?></strong>
+                    <span style="color: var(--text-muted); font-size: 0.8rem;"><?= esc(date('d/m/Y', strtotime($rev['created_at']))) ?></span>
+                </div>
+                <div class="star" style="margin: 4px 0;"><?= str_repeat('★', (int)$rev['rating']) . str_repeat('☆', 5 - (int)$rev['rating']) ?></div>
+                <?php if (!empty($rev['comment'])): ?>
+                    <p style="color: var(--text-secondary);"><?= esc($rev['comment']) ?></p>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
 
 </div>
 
