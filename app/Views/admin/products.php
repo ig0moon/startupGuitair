@@ -27,6 +27,10 @@
             <span class="material-symbols-outlined">manage_accounts</span>
             Gestão de Usuários & Acessos
         </a>
+        <a href="<?= base_url('admin/categorias') ?>" class="admin-tab">
+            <span class="material-symbols-outlined">category</span>
+            Categorias
+        </a>
         <a href="<?= base_url('admin/produtos') ?>" class="admin-tab active">
             <span class="material-symbols-outlined">inventory_2</span>
             Gestão de Produtos
@@ -85,6 +89,16 @@
                 <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 4px 0 0 0;">
                     Gerencie o estoque, preços e opções dos instrumentos musicais disponíveis na loja.
                 </p>
+                <!-- Filtro por categoria (relacionamento categories 1:N products) -->
+                <form method="GET" action="<?= base_url('admin/produtos') ?>" style="margin-top: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <label for="filterCategory" style="color: var(--text-secondary); font-size: 0.85rem;">Filtrar por categoria:</label>
+                    <select name="categoria" id="filterCategory" onchange="this.form.submit()" style="width: auto; min-width: 220px; height: 36px; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-subtle); color: #fff; padding: 0 12px; font-family: inherit;">
+                        <option value="" style="background: #111422;">Todas</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= esc($cat['slug']) ?>" <?= ($categoryFilter ?? '') === $cat['slug'] ? 'selected' : '' ?> style="background: #111422;"><?= esc($cat['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
             </div>
 
             <!-- Botão de Abertura do Formulário de Adição -->
@@ -139,7 +153,7 @@
                                 </td>
                                 <td>
                                     <span class="role-badge" style="background: rgba(6, 182, 212, 0.12); color: var(--brand-cyan); border-color: rgba(6, 182, 212, 0.3);">
-                                        <?= esc(ucfirst($p['category'])) ?>
+                                        <?= esc($p['category_name'] ?? ucfirst((string)($p['category'] ?? '-'))) ?>
                                     </span>
                                 </td>
                                 <td>
@@ -253,11 +267,9 @@
                     <div class="form-group">
                         <label class="form-label" for="prodCategory">Categoria *</label>
                         <select name="category" id="prodCategory" required style="width: 100%; height: 48px; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-subtle); color: #fff; padding: 0 16px; font-family: inherit;">
-                            <option value="guitarra" style="background: #111422; color: #fff;">Guitarra Elétrica</option>
-                            <option value="violao" style="background: #111422; color: #fff;">Violão Acústico</option>
-                            <option value="bateria" style="background: #111422; color: #fff;">Bateria Eletrônica</option>
-                            <option value="acessorio" style="background: #111422; color: #fff;">Acessórios / Áudio</option>
-                            <option value="outros" style="background: #111422; color: #fff;">Outros Instrumentos</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= esc($cat['slug']) ?>" style="background: #111422; color: #fff;"><?= esc($cat['name']) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -407,11 +419,9 @@
                     <div class="form-group">
                         <label class="form-label" for="editProdCategory">Categoria *</label>
                         <select name="category" id="editProdCategory" required style="width: 100%; height: 48px; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-subtle); color: #fff; padding: 0 16px; font-family: inherit;">
-                            <option value="guitarra" style="background: #111422; color: #fff;">Guitarra Elétrica</option>
-                            <option value="violao" style="background: #111422; color: #fff;">Violão Acústico</option>
-                            <option value="bateria" style="background: #111422; color: #fff;">Bateria Eletrônica</option>
-                            <option value="acessorio" style="background: #111422; color: #fff;">Acessórios / Áudio</option>
-                            <option value="outros" style="background: #111422; color: #fff;">Outros Instrumentos</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= esc($cat['slug']) ?>" style="background: #111422; color: #fff;"><?= esc($cat['name']) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -576,7 +586,7 @@ function openEditProductModal(product) {
     document.getElementById('editProdId').value = product.id || '';
     document.getElementById('editModalHeaderTitle').textContent = '#' + (product.id || '') + ' - ' + (product.name || '');
     document.getElementById('editProdName').value = product.name || '';
-    document.getElementById('editProdCategory').value = product.category || 'guitarra';
+    document.getElementById('editProdCategory').value = product.category || '';
     document.getElementById('editProdSlug').value = product.slug || '';
     
     // Formatação de Preço

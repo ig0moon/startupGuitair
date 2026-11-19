@@ -23,6 +23,10 @@
             <span class="material-symbols-outlined">manage_accounts</span>
             Gestão de Usuários & Acessos
         </a>
+        <a href="<?= base_url('admin/categorias') ?>" class="admin-tab">
+            <span class="material-symbols-outlined">category</span>
+            Categorias
+        </a>
         <a href="<?= base_url('admin/produtos') ?>" class="admin-tab">
             <span class="material-symbols-outlined">inventory_2</span>
             Gestão de Produtos

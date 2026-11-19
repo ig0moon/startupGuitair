@@ -1,0 +1,40 @@
+# Banco de dados local do GuitAIr (somente para desenvolvimento).
+#
+#   docker compose up -d        -> sobe MySQL 8 (porta 3308) + phpMyAdmin (http://localhost:8081)
+#   docker compose down -v      -> derruba e APAGA os dados (na próxima subida o schema.sql é importado de novo)
+#
+# Na primeira subida o MySQL importa automaticamente o schema.sql.
+services:
+  db:
+    image: mysql:8.0
+    container_name: guitair-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: guitair   # senha de desenvolvimento local
+      MYSQL_DATABASE: guitair_db
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3308:3306"
+    volumes:
+      - guitair_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pguitair"]
+      interval: 5s
+      retries: 20
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: guitair-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: guitair
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+
+volumes:
+  guitair_data:

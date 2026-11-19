@@ -13,15 +13,11 @@
         <a href="<?= base_url('produtos?categoria=todos') ?>" class="tab-btn <?= ($currentCategory === 'todos') ? 'active' : '' ?>">
             Todos os Instrumentos
         </a>
-        <a href="<?= base_url('produtos?categoria=violao') ?>" class="tab-btn <?= ($currentCategory === 'violao') ? 'active' : '' ?>">
-            Violões Acústicos IA
-        </a>
-        <a href="<?= base_url('produtos?categoria=guitarra') ?>" class="tab-btn <?= ($currentCategory === 'guitarra') ? 'active' : '' ?>">
-            Guitarras Elétricas Neurais
-        </a>
-        <a href="<?= base_url('produtos?categoria=bateria') ?>" class="tab-btn <?= ($currentCategory === 'bateria') ? 'active' : '' ?>">
-            Baterias Eletrônicas Smart
-        </a>
+        <?php foreach (($categories ?? []) as $cat): ?>
+            <a href="<?= base_url('produtos?categoria=' . urlencode($cat['slug'])) ?>" class="tab-btn <?= ($currentCategory === $cat['slug']) ? 'active' : '' ?>">
+                <?= esc($cat['name']) ?>
+            </a>
+        <?php endforeach; ?>
     </div>
 
     <!-- Products Grid -->

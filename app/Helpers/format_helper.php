@@ -121,3 +121,30 @@ if (!function_exists('order_status_badge')) {
         return '<span class="status-badge status-' . esc($key, 'attr') . '">' . esc($label) . '</span>';
     }
 }
+
+if (!function_exists('slugify')) {
+    /**
+     * Converte um texto em slug de URL: "Violão Acústico" -> "violao-acustico".
+     */
+    function slugify(string $text): string
+    {
+        if (function_exists('transliterator_transliterate')) {
+            $text = (string)transliterator_transliterate('Any-Latin; Latin-ASCII', $text);
+        }
+        $slug = preg_replace('~[^\pL\d]+~u', '-', trim($text));
+        $slug = iconv('utf-8', 'us-ascii//TRANSLIT//IGNORE', (string)$slug);
+        $slug = preg_replace('~[^-\w]+~', '', (string)$slug);
+        return strtolower(trim((string)$slug, '-'));
+    }
+}
+
+if (!function_exists('parse_money')) {
+    /**
+     * Converte valor digitado no padrão brasileiro em float: "R$ 1.899,90" -> 1899.9.
+     */
+    function parse_money($raw): float
+    {
+        $clean = str_replace(['R$', ' ', '.'], '', (string)$raw);
+        return (float)str_replace(',', '.', $clean);
+    }
+}

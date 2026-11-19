@@ -195,6 +195,83 @@ class ProductModel extends Model
         return null;
     }
 
+    /* ---------------- Operações do painel administrativo (CRUD) ---------------- */
+
+    /** READ: produtos ativos com o nome e o slug da categoria (JOIN categories). */
+    public function adminList(): array
+    {
+        try {
+            $rows = $this->select('products.*, categories.slug AS category, categories.name AS category_name')
+                         ->join('categories', 'categories.id = products.category_id', 'left')
+                         ->where('products.active', 1)
+                         ->orderBy('products.id', 'DESC')
+                         ->findAll();
+            return array_map([$this, 'formatProduct'], $rows);
+        } catch (\Throwable $e) {
+            return $this->getActiveProducts();
+        }
+    }
+
+    /** Linha crua do produto (ativo ou não), ou null. */
+    public function findRaw(int $id): ?array
+    {
+        return $this->find($id);
+    }
+
+    /** Gera slug único a partir do texto, ignorando o próprio produto na edição. */
+    public function uniqueSlug(string $text, ?int $exceptId = null): string
+    {
+        $base = slugify($text) ?: 'produto';
+        $slug = $base;
+        $n    = 2;
+        while (true) {
+            $builder = $this->builder()->where('slug', $slug);
+            if ($exceptId) {
+                $builder->where('id !=', $exceptId);
+            }
+            if ($builder->countAllResults() === 0) {
+                return $slug;
+            }
+            $slug = $base . '-' . $n++;
+        }
+    }
+
+    /** CREATE */
+    public function createProduct(array $data): int
+    {
+        $this->insert($data);
+        return (int)$this->getInsertID();
+    }
+
+    /** UPDATE */
+    public function updateProduct(int $id, array $data): bool
+    {
+        return $this->update($id, $data);
+    }
+
+    /**
+     * DELETE: produto que nunca foi vendido é apagado do banco; produto que já
+     * aparece em pedidos é só desativado (RN06), para não perder o histórico.
+     *
+     * @return string|null 'deleted', 'deactivated' ou null se não existir
+     */
+    public function removeProduct(int $id): ?string
+    {
+        $product = $this->find($id);
+        if (!$product) {
+            return null;
+        }
+
+        $sold = $this->db->table('order_items')->where('product_id', $id)->countAllResults();
+        if ($sold === 0) {
+            $this->delete($id);
+            return 'deleted';
+        }
+
+        $this->update($id, ['active' => 0, 'featured' => 0]);
+        return 'deactivated';
+    }
+
     protected function formatProduct(array $p): array
     {
         if (is_string($p['features'] ?? null)) {

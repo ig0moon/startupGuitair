@@ -2,26 +2,33 @@
 
 namespace App\Controllers;
 
+use App\Models\CategoryModel;
+use App\Models\OrderModel;
+use App\Models\ProductModel;
+use App\Models\UserModel;
+
+/**
+ * Controller do painel administrativo.
+ * Só lê a requisição, valida, chama os Models (DAO) e escolhe a View.
+ * Nenhum SQL é escrito aqui.
+ */
 class Admin extends BaseController
 {
-    protected $db;
+    protected UserModel $users;
+    protected ProductModel $products;
+    protected CategoryModel $categories;
+    protected OrderModel $orders;
 
     public function __construct()
     {
-        $this->db = \Config\Database::connect();
+        $this->users      = new UserModel();
+        $this->products   = new ProductModel();
+        $this->categories = new CategoryModel();
+        $this->orders     = new OrderModel();
     }
 
     /**
-     * Devolve o id da categoria pelo slug (RN05) ou null se não existir.
-     */
-    protected function findCategoryId(string $slug): ?int
-    {
-        $row = $this->db->table('categories')->select('id')->where('slug', $slug)->get()->getRowArray();
-        return $row ? (int)$row['id'] : null;
-    }
-
-    /**
-     * Check if currently logged in user has admin role in database via Query Builder
+     * Confere no banco se o usuário logado é administrador.
      */
     protected function checkAdminAccess()
     {
@@ -30,72 +37,45 @@ class Admin extends BaseController
             return redirect()->to(base_url('conta'))->with('error', 'Por favor, faça login para acessar o painel.');
         }
 
-        // Query Builder: check directly in users table
-        $userInDb = $this->db->table('users')
-                             ->select('id, name, email, role')
-                             ->where('id', $sessionUser['id'])
-                             ->get()
-                             ->getRowArray();
-
-        if (!$userInDb || $userInDb['role'] !== 'admin') {
+        if (!$this->users->isAdmin((int)$sessionUser['id'])) {
             return redirect()->to(base_url('conta'))->with('error', 'Acesso negado: sua conta não possui privilégios de administrador no banco de dados.');
         }
 
-        return null; // Allowed
+        return null;
     }
 
-    /**
-     * Admin Dashboard: Overview & User Access Management
-     */
+    /* =====================================================================
+     * USUÁRIOS
+     * ===================================================================== */
+
     public function index()
     {
         if ($redirect = $this->checkAdminAccess()) return $redirect;
 
-        // Query Builder: fetch statistics
-        $totalUsers = $this->db->table('users')->countAllResults();
-        $totalOrders = $this->db->table('orders')->countAllResults();
-        $revenueRow = $this->db->table('orders')->selectSum('total')->get()->getRowArray();
-        $totalRevenue = $revenueRow['total'] ?? 0;
-
-        // Query Builder: list all users
-        $users = $this->db->table('users')
-                          ->select('id, name, email, phone, role, created_at')
-                          ->orderBy('id', 'ASC')
-                          ->get()
-                          ->getResultArray();
+        $users = $this->users->listForAdmin();
+        $stats = $this->orders->adminStats();
 
         return view('admin/dashboard', [
-            'totalUsers'   => $totalUsers,
-            'totalOrders'  => $totalOrders,
-            'totalRevenue' => $totalRevenue,
+            'totalUsers'   => count($users),
+            'totalOrders'  => $stats['totalOrders'],
+            'totalRevenue' => $stats['totalRevenue'],
             'users'        => $users,
             'pageTitle'    => 'GuitAIr - Painel Administrativo'
         ]);
     }
 
-    /**
-     * Change user role in the database using Query Builder
-     */
     public function changeRole()
     {
         if ($redirect = $this->checkAdminAccess()) return $redirect;
 
-        $userId = (int)$this->request->getPost('user_id');
-        $newRole = $this->request->getPost('role');
+        $userId  = (int)$this->request->getPost('user_id');
+        $newRole = (string)$this->request->getPost('role');
 
-        if (!in_array($newRole, ['user', 'admin'])) {
+        if (!$this->users->changeRole($userId, $newRole)) {
             return redirect()->back()->with('error', 'Função inválida.');
         }
 
-        // Query Builder: update role directly in database
-        $this->db->table('users')
-                 ->where('id', $userId)
-                 ->update([
-                     'role'       => $newRole,
-                     'updated_at' => date('Y-m-d H:i:s')
-                 ]);
-
-        // If the logged in user changed their own role, update session
+        // Se o admin mudou o próprio papel, atualiza a sessão
         $sessionUser = session('user');
         if ($sessionUser && $sessionUser['id'] == $userId) {
             $sessionUser['role'] = $newRole;
@@ -105,79 +85,31 @@ class Admin extends BaseController
         return redirect()->back()->with('success', 'Nível de acesso do usuário ID #' . $userId . ' alterado para "' . strtoupper($newRole) . '" com sucesso!');
     }
 
-    /**
-     * View products bought by user (Query Builder)
-     */
+    /* =====================================================================
+     * PEDIDOS / COMPRAS
+     * ===================================================================== */
+
     public function userPurchases()
     {
         if ($redirect = $this->checkAdminAccess()) return $redirect;
 
-        $search = trim((string)($this->request->getGet('busca') ?? $this->request->getGet('q') ?? $this->request->getGet('usuario_id') ?? ''));
+        $search    = trim((string)($this->request->getGet('busca') ?? $this->request->getGet('q') ?? $this->request->getGet('usuario_id') ?? ''));
+        $purchases = $this->orders->searchPurchases($search);
 
-        // Query Builder: list all users for reference
-        $allUsers = $this->db->table('users')
-                             ->select('id, name, email')
-                             ->orderBy('name', 'ASC')
-                             ->get()
-                             ->getResultArray();
-
-        // Query Builder: fetch purchases joined across order_items, orders, users, and products
-        $builder = $this->db->table('order_items');
-        $builder->select('
-            users.id as user_id,
-            users.name as user_name,
-            users.email as user_email,
-            orders.id as order_id,
-            orders.order_number,
-            orders.customer_name,
-            orders.customer_email,
-            orders.created_at as order_date,
-            orders.status as order_status,
-            order_items.product_name,
-            order_items.price,
-            order_items.quantity,
-            order_items.subtotal,
-            products.image as product_image
-        ');
-        $builder->join('orders', 'orders.id = order_items.order_id', 'inner');
-        $builder->join('users', 'users.id = orders.user_id', 'left');
-        $builder->join('products', 'products.id = order_items.product_id', 'left');
-
-        if (!empty($search)) {
-            if (is_numeric($search)) {
-                $builder->groupStart()
-                        ->where('orders.user_id', (int)$search)
-                        ->orWhere('orders.id', (int)$search)
-                        ->groupEnd();
-            } else {
-                $builder->groupStart()
-                        ->like('users.name', $search)
-                        ->orLike('users.email', $search)
-                        ->orLike('orders.customer_name', $search)
-                        ->orLike('orders.customer_email', $search)
-                        ->orLike('orders.order_number', $search)
-                        ->orLike('order_items.product_name', $search)
-                        ->groupEnd();
-            }
-        }
-
-        $builder->orderBy('orders.id', 'DESC');
-        $purchases = $builder->get()->getResultArray();
-
-        // Group by user for structured presentation
+        // Agrupa por usuário para a apresentação
         $groupedByUser = [];
         foreach ($purchases as $row) {
-            $uId = $row['user_id'] ?? 'guest';
-            $uName = !empty($row['user_name']) ? $row['user_name'] : (!empty($row['customer_name']) ? $row['customer_name'] : 'Cliente Convidado');
+            $uId    = $row['user_id'] ?? 'guest';
+            $uName  = !empty($row['user_name']) ? $row['user_name'] : (!empty($row['customer_name']) ? $row['customer_name'] : 'Cliente Convidado');
             $uEmail = !empty($row['user_email']) ? $row['user_email'] : ($row['customer_email'] ?? 'Sem e-mail');
-            
+
             if (!isset($groupedByUser[$uId])) {
                 $groupedByUser[$uId] = [
-                    'user_id'    => $uId,
-                    'user_name'  => $uName,
-                    'user_email' => $uEmail,
-                    'items'      => [],
-                    'total_spent'=> 0
+                    'user_id'     => $uId,
+                    'user_name'   => $uName,
+                    'user_email'  => $uEmail,
+                    'items'       => [],
+                    'total_spent' => 0
                 ];
             }
             $groupedByUser[$uId]['items'][] = $row;
@@ -185,414 +117,308 @@ class Admin extends BaseController
         }
 
         return view('admin/user_purchases', [
-            'allUsers'       => $allUsers,
-            'groupedByUser'  => $groupedByUser,
-            'searchQuery'    => $search,
-            'totalRecords'   => count($purchases),
-            'pageTitle'      => 'GuitAIr Admin - Produtos Comprados por Usuário'
+            'allUsers'      => $this->users->listForAdmin('name'),
+            'groupedByUser' => $groupedByUser,
+            'searchQuery'   => $search,
+            'totalRecords'  => count($purchases),
+            'pageTitle'     => 'GuitAIr Admin - Produtos Comprados por Usuário'
         ]);
     }
 
-    /**
-     * Orders management view
-     */
     public function orders()
     {
         if ($redirect = $this->checkAdminAccess()) return $redirect;
 
-        // Query Builder: list all orders
-        $orders = $this->db->table('orders')
-                           ->select('orders.*, users.name as registered_name')
-                           ->join('users', 'users.id = orders.user_id', 'left')
-                           ->orderBy('orders.id', 'DESC')
-                           ->get()
-                           ->getResultArray();
-
-        // Attach items to each order
-        foreach ($orders as &$ord) {
-            $ord['items'] = $this->db->table('order_items')
-                                     ->where('order_id', $ord['id'])
-                                     ->get()
-                                     ->getResultArray();
-        }
-
         return view('admin/orders', [
-            'orders'    => $orders,
+            'orders'    => $this->orders->listWithItems(),
             'pageTitle' => 'GuitAIr Admin - Gerenciamento de Pedidos'
         ]);
     }
 
-    /**
-     * Update order status via Query Builder
-     */
     public function updateOrderStatus()
     {
         if ($redirect = $this->checkAdminAccess()) return $redirect;
 
         $orderId = (int)$this->request->getPost('order_id');
-        $status = $this->request->getPost('status');
+        $status  = (string)$this->request->getPost('status');
 
-        $validStatuses = ['pending', 'paid', 'shipped', 'completed', 'cancelled'];
-        if (!in_array($status, $validStatuses)) {
+        if (!$this->orders->updateStatus($orderId, $status)) {
             return redirect()->back()->with('error', 'Status inválido.');
         }
 
-        // Query Builder: update order status
-        $this->db->table('orders')
-                 ->where('id', $orderId)
-                 ->update([
-                     'status'     => $status,
-                     'updated_at' => date('Y-m-d H:i:s')
-                 ]);
-
-        $statusName = function_exists('order_status_label') ? order_status_label($status) : strtoupper($status);
-        return redirect()->back()->with('success', 'Status do Pedido #' . $orderId . ' alterado para "' . $statusName . '" com sucesso!');
+        return redirect()->back()->with('success', 'Status do Pedido #' . $orderId . ' alterado para "' . order_status_label($status) . '" com sucesso!');
     }
 
-    /**
-     * Admin Products Management: View all products & display addition form
-     */
+    /* =====================================================================
+     * CATEGORIAS (tabela pai) — CRUD completo
+     * ===================================================================== */
+
+    /** READ */
+    public function categories()
+    {
+        if ($redirect = $this->checkAdminAccess()) return $redirect;
+
+        $categories = $this->categories->listWithProductCount();
+
+        return view('admin/categories', [
+            'categories'    => $categories,
+            'totalProducts' => array_sum(array_column($categories, 'product_count')),
+            'pageTitle'     => 'GuitAIr Admin - Gestão de Categorias'
+        ]);
+    }
+
+    /** CREATE */
+    public function saveCategory()
+    {
+        if ($redirect = $this->checkAdminAccess()) return $redirect;
+
+        $result = $this->categories->createCategory(
+            (string)$this->request->getPost('name'),
+            (string)$this->request->getPost('slug'),
+            (string)$this->request->getPost('description')
+        );
+
+        return redirect()->to(base_url('admin/categorias'))
+                         ->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /** UPDATE */
+    public function updateCategory()
+    {
+        if ($redirect = $this->checkAdminAccess()) return $redirect;
+
+        $result = $this->categories->updateCategory(
+            (int)$this->request->getPost('category_id'),
+            (string)$this->request->getPost('name'),
+            (string)$this->request->getPost('slug'),
+            (string)$this->request->getPost('description')
+        );
+
+        return redirect()->to(base_url('admin/categorias'))
+                         ->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /** DELETE */
+    public function deleteCategory()
+    {
+        if ($redirect = $this->checkAdminAccess()) return $redirect;
+
+        $result = $this->categories->deleteCategory((int)$this->request->getPost('category_id'));
+
+        return redirect()->to(base_url('admin/categorias'))
+                         ->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
+    /* =====================================================================
+     * PRODUTOS (tabela filha) — CRUD completo
+     * ===================================================================== */
+
+    /** READ */
     public function products()
     {
         if ($redirect = $this->checkAdminAccess()) return $redirect;
 
-        $productModel = new \App\Models\ProductModel();
+        $products = $this->products->adminList();
 
-        $products = [];
-        try {
-            $products = $this->db->table('products')
-                                 ->select('products.*, categories.slug AS category')
-                                 ->join('categories', 'categories.id = products.category_id', 'left')
-                                 ->where('products.active', 1)
-                                 ->orderBy('products.id', 'DESC')
-                                 ->get()
-                                 ->getResultArray();
-            foreach ($products as &$p) {
-                if (is_string($p['features'] ?? null)) {
-                    $p['features'] = json_decode($p['features'], true) ?: [];
-                }
-                if (is_string($p['specs'] ?? null)) {
-                    $p['specs'] = json_decode($p['specs'], true) ?: [];
-                }
-            }
-        } catch (\Throwable $e) {
-            $products = $productModel->getActiveProducts();
+        // Filtro opcional por categoria (?categoria=slug), vindo da tela de categorias
+        $filter = trim((string)$this->request->getGet('categoria'));
+        if ($filter !== '') {
+            $products = array_values(array_filter($products, fn($p) => ($p['category'] ?? '') === $filter));
         }
-
-        $totalProducts = count($products);
-        $totalStock = array_sum(array_column($products, 'stock'));
-        $featuredCount = count(array_filter($products, fn($p) => !empty($p['featured'])));
 
         return view('admin/products', [
             'products'       => $products,
-            'totalProducts'  => $totalProducts,
-            'totalStock'     => $totalStock,
-            'featuredCount'  => $featuredCount,
+            'categories'     => $this->categories->listAll(),
+            'categoryFilter' => $filter,
+            'totalProducts'  => count($products),
+            'totalStock'     => array_sum(array_column($products, 'stock')),
+            'featuredCount'  => count(array_filter($products, fn($p) => !empty($p['featured']))),
             'pageTitle'      => 'GuitAIr Admin - Gestão de Produtos'
         ]);
     }
 
-    /**
-     * Create / Add new product to MySQL database
-     */
+    /** CREATE */
     public function saveProduct()
     {
         if ($redirect = $this->checkAdminAccess()) return $redirect;
 
         $name = trim((string)$this->request->getPost('name'));
-        if (empty($name)) {
+        if ($name === '') {
             return redirect()->back()->with('error', 'O nome do produto é obrigatório.');
         }
 
-        $category = trim((string)$this->request->getPost('category')) ?: 'guitarra';
-        $categoryId = $this->findCategoryId($category);
+        $categoryId = $this->categories->idBySlug((string)$this->request->getPost('category'));
         if (!$categoryId) {
             return redirect()->back()->with('error', 'Categoria inválida.');
         }
+
         $tagline = trim((string)$this->request->getPost('tagline')) ?: 'Instrumento musical inteligente com inteligência artificial embarcada.';
-        
-        // Clean price
-        $rawPrice = (string)$this->request->getPost('price');
-        $cleanPrice = str_replace(['R$', ' ', '.'], '', $rawPrice);
-        $cleanPrice = str_replace(',', '.', $cleanPrice);
-        $price = (float)$cleanPrice;
-        if ($price <= 0) $price = 999.00;
 
-        $rawOldPrice = (string)$this->request->getPost('old_price');
-        $oldPrice = null;
-        if (!empty($rawOldPrice)) {
-            $cleanOld = str_replace(['R$', ' ', '.'], '', $rawOldPrice);
-            $cleanOld = str_replace(',', '.', $cleanOld);
-            $oldVal = (float)$cleanOld;
-            if ($oldVal > 0) $oldPrice = $oldVal;
+        $price = parse_money($this->request->getPost('price'));
+        if ($price <= 0) {
+            return redirect()->back()->with('error', 'Informe um preço maior que zero.');
         }
+        $oldPrice = parse_money($this->request->getPost('old_price'));
 
-        $stock = max(0, (int)$this->request->getPost('stock'));
-        $badge = trim((string)$this->request->getPost('badge')) ?: null;
-        $description = trim((string)$this->request->getPost('description')) ?: $tagline;
-        $featured = $this->request->getPost('featured') ? 1 : 0;
-
-        // Slug generation
-        $slugInput = trim((string)$this->request->getPost('slug'));
-        if (empty($slugInput)) {
-            $slugInput = $name;
-        }
-        $slug = preg_replace('~[^\pL\d]+~u', '-', $slugInput);
-        $slug = iconv('utf-8', 'us-ascii//TRANSLIT//IGNORE', $slug);
-        $slug = preg_replace('~[^-\w]+~', '', $slug);
-        $slug = trim($slug, '-');
-        $slug = strtolower($slug);
-        if (empty($slug)) {
-            $slug = 'produto-' . time();
-        }
-
-        // Check uniqueness in database
-        try {
-            $existing = $this->db->table('products')->where('slug', $slug)->countAllResults();
-            if ($existing > 0) {
-                $slug .= '-' . rand(100, 999);
-            }
-        } catch (\Throwable $e) {}
-
-        // Features list
-        $featuresRaw = (string)$this->request->getPost('features');
-        $featuresList = array_values(array_filter(array_map('trim', explode("\n", $featuresRaw))));
-        if (empty($featuresList)) {
-            $featuresList = [
-                'Processamento neural DSP em tempo real',
-                'Conexão sem fio de ultrabaixa latência',
-                'Integração nativa com app GuitAIr'
-            ];
-        }
-
-        // Technical specs
-        $specs = [
-            'Categoria'    => ucfirst($category),
-            'Conectividade'=> 'Bluetooth 5.3 / USB-C Áudio',
-            'Latência'     => '< 1.2ms',
-            'Garantia'     => '12 Meses Oficial'
-        ];
-        $customSpecs = trim((string)$this->request->getPost('specs'));
-        if (!empty($customSpecs)) {
-            foreach (explode("\n", $customSpecs) as $line) {
-                if (strpos($line, ':') !== false) {
-                    [$k, $v] = explode(':', $line, 2);
-                    $specs[trim($k)] = trim($v);
-                }
-            }
-        }
-
-        // Image Handling
-        $imagePath = 'img/guitarra.png';
-        $preset = trim((string)$this->request->getPost('preset_image'));
-        if (!empty($preset)) {
-            $imagePath = $preset;
-        }
-
-        $imageFile = $this->request->getFile('image_file');
-        if ($imageFile && $imageFile->isValid() && !$imageFile->hasMoved()) {
-            $newName = $imageFile->getRandomName();
-            $uploadDir = FCPATH . 'img/uploads/';
-            if (!is_dir($uploadDir)) {
-                @mkdir($uploadDir, 0777, true);
-            }
-            $imageFile->move($uploadDir, $newName);
-            $imagePath = 'img/uploads/' . $newName;
-        }
-
-        $insertData = [
-            'slug'          => $slug,
-            'name'          => $name,
-            'tagline'       => $tagline,
-            'category_id'   => $categoryId,
-            'price'         => $price,
-            'old_price'     => $oldPrice,
-            'image'         => $imagePath,
-            'badge'         => $badge,
-            'description'   => $description,
-            'features'      => json_encode($featuresList, JSON_UNESCAPED_UNICODE),
-            'specs'         => json_encode($specs, JSON_UNESCAPED_UNICODE),
-            'stock'         => $stock,
-            'featured'      => $featured,
-            'created_at'    => date('Y-m-d H:i:s'),
-            'updated_at'    => date('Y-m-d H:i:s')
+        $features = $this->linesFromPost('features') ?: [
+            'Processamento neural DSP em tempo real',
+            'Conexão sem fio de ultrabaixa latência',
+            'Integração nativa com app GuitAIr'
         ];
 
+        $specs = array_merge([
+            'Conectividade' => 'Bluetooth 5.3 / USB-C Áudio',
+            'Latência'      => '< 1.2ms',
+            'Garantia'      => '12 Meses Oficial'
+        ], $this->specsFromPost());
+
+        $preset    = trim((string)$this->request->getPost('preset_image'));
+        $imagePath = $this->uploadedImage() ?? ($preset !== '' ? $preset : 'img/guitarra.png');
+
         try {
-            $this->db->table('products')->insert($insertData);
+            $this->products->createProduct([
+                'slug'        => $this->products->uniqueSlug((string)$this->request->getPost('slug') ?: $name),
+                'name'        => $name,
+                'tagline'     => $tagline,
+                'category_id' => $categoryId,
+                'price'       => $price,
+                'old_price'   => $oldPrice > 0 ? $oldPrice : null,
+                'image'       => $imagePath,
+                'badge'       => trim((string)$this->request->getPost('badge')) ?: null,
+                'description' => trim((string)$this->request->getPost('description')) ?: $tagline,
+                'features'    => json_encode($features, JSON_UNESCAPED_UNICODE),
+                'specs'       => json_encode($specs, JSON_UNESCAPED_UNICODE),
+                'stock'       => max(0, (int)$this->request->getPost('stock')),
+                'featured'    => $this->request->getPost('featured') ? 1 : 0,
+                'active'      => 1,
+            ]);
             return redirect()->to(base_url('admin/produtos'))->with('success', 'Produto "' . esc($name) . '" cadastrado com sucesso no catálogo!');
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', 'Erro ao salvar no banco de dados: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Update existing product in MySQL database
-     */
+    /** UPDATE */
     public function updateProduct()
     {
         if ($redirect = $this->checkAdminAccess()) return $redirect;
 
         $productId = (int)$this->request->getPost('product_id');
-        if ($productId <= 0) {
-            return redirect()->back()->with('error', 'ID do produto não informado ou inválido.');
-        }
-
-        $existingProduct = $this->db->table('products')->where('id', $productId)->get()->getRowArray();
-        if (!$existingProduct) {
+        $existing  = $productId > 0 ? $this->products->findRaw($productId) : null;
+        if (!$existing) {
             return redirect()->back()->with('error', 'Produto não encontrado para edição.');
         }
 
         $name = trim((string)$this->request->getPost('name'));
-        if (empty($name)) {
+        if ($name === '') {
             return redirect()->back()->with('error', 'O nome do produto é obrigatório.');
         }
 
         $categorySlug = trim((string)$this->request->getPost('category'));
-        $categoryId = $categorySlug !== ''
-            ? $this->findCategoryId($categorySlug)
-            : (int)$existingProduct['category_id'];
+        $categoryId   = $categorySlug !== '' ? $this->categories->idBySlug($categorySlug) : (int)$existing['category_id'];
         if (!$categoryId) {
             return redirect()->back()->with('error', 'Categoria inválida.');
         }
-        $tagline = trim((string)$this->request->getPost('tagline')) ?: $existingProduct['tagline'];
 
-        // Clean price
-        $rawPrice = (string)$this->request->getPost('price');
-        $cleanPrice = str_replace(['R$', ' ', '.'], '', $rawPrice);
-        $cleanPrice = str_replace(',', '.', $cleanPrice);
-        $price = (float)$cleanPrice;
-        if ($price <= 0) $price = (float)$existingProduct['price'];
+        $tagline  = trim((string)$this->request->getPost('tagline')) ?: $existing['tagline'];
+        $price    = parse_money($this->request->getPost('price'));
+        $oldPrice = parse_money($this->request->getPost('old_price'));
 
-        $rawOldPrice = (string)$this->request->getPost('old_price');
-        $oldPrice = null;
-        if (!empty($rawOldPrice)) {
-            $cleanOld = str_replace(['R$', ' ', '.'], '', $rawOldPrice);
-            $cleanOld = str_replace(',', '.', $cleanOld);
-            $oldVal = (float)$cleanOld;
-            if ($oldVal > 0) $oldPrice = $oldVal;
-        }
+        $features = $this->linesFromPost('features')
+            ?: (json_decode((string)$existing['features'], true) ?: []);
+        $specs = $this->specsFromPost()
+            ?: (json_decode((string)$existing['specs'], true) ?: []);
 
-        $stock = max(0, (int)$this->request->getPost('stock'));
-        $badge = trim((string)$this->request->getPost('badge')) ?: null;
-        $description = trim((string)$this->request->getPost('description')) ?: $tagline;
-        $featured = $this->request->getPost('featured') ? 1 : 0;
-
-        // Slug handling
-        $slugInput = trim((string)$this->request->getPost('slug'));
-        if (empty($slugInput)) {
-            $slugInput = $name;
-        }
-        $slug = preg_replace('~[^\pL\d]+~u', '-', $slugInput);
-        $slug = iconv('utf-8', 'us-ascii//TRANSLIT//IGNORE', $slug);
-        $slug = preg_replace('~[^-\w]+~', '', $slug);
-        $slug = trim($slug, '-');
-        $slug = strtolower($slug);
-        if (empty($slug)) {
-            $slug = $existingProduct['slug'];
-        }
-
-        // Uniqueness check excluding current product
-        try {
-            $slugConflict = $this->db->table('products')
-                                     ->where('slug', $slug)
-                                     ->where('id !=', $productId)
-                                     ->countAllResults();
-            if ($slugConflict > 0) {
-                $slug .= '-' . rand(100, 999);
-            }
-        } catch (\Throwable $e) {}
-
-        // Features list
-        $featuresRaw = (string)$this->request->getPost('features');
-        $featuresList = array_values(array_filter(array_map('trim', explode("\n", $featuresRaw))));
-        if (empty($featuresList)) {
-            $featuresList = is_string($existingProduct['features']) ? json_decode($existingProduct['features'], true) : [];
-        }
-
-        // Technical specs
-        $specs = [];
-        $customSpecs = trim((string)$this->request->getPost('specs'));
-        if (!empty($customSpecs)) {
-            foreach (explode("\n", $customSpecs) as $line) {
-                if (strpos($line, ':') !== false) {
-                    [$k, $v] = explode(':', $line, 2);
-                    $specs[trim($k)] = trim($v);
-                }
-            }
-        } else {
-            $specs = is_string($existingProduct['specs']) ? json_decode($existingProduct['specs'], true) : [];
-        }
-
-        // Image Handling
-        $imagePath = $existingProduct['image'];
-        $preset = trim((string)$this->request->getPost('preset_image'));
-        if (!empty($preset) && $preset !== 'keep_current') {
+        $imagePath = $existing['image'];
+        $preset    = trim((string)$this->request->getPost('preset_image'));
+        if ($preset !== '' && $preset !== 'keep_current') {
             $imagePath = $preset;
         }
-
-        $imageFile = $this->request->getFile('image_file');
-        if ($imageFile && $imageFile->isValid() && !$imageFile->hasMoved()) {
-            $newName = $imageFile->getRandomName();
-            $uploadDir = FCPATH . 'img/uploads/';
-            if (!is_dir($uploadDir)) {
-                @mkdir($uploadDir, 0777, true);
-            }
-            $imageFile->move($uploadDir, $newName);
-            $imagePath = 'img/uploads/' . $newName;
-        }
-
-        $updateData = [
-            'slug'        => $slug,
-            'name'        => $name,
-            'tagline'     => $tagline,
-            'category_id' => $categoryId,
-            'price'       => $price,
-            'old_price'   => $oldPrice,
-            'image'       => $imagePath,
-            'badge'       => $badge,
-            'description' => $description,
-            'features'    => json_encode($featuresList, JSON_UNESCAPED_UNICODE),
-            'specs'       => json_encode($specs, JSON_UNESCAPED_UNICODE),
-            'stock'       => $stock,
-            'featured'    => $featured,
-            'updated_at'  => date('Y-m-d H:i:s')
-        ];
+        $imagePath = $this->uploadedImage() ?? $imagePath;
 
         try {
-            $this->db->table('products')->where('id', $productId)->update($updateData);
+            $this->products->updateProduct($productId, [
+                'slug'        => $this->products->uniqueSlug((string)$this->request->getPost('slug') ?: $name, $productId),
+                'name'        => $name,
+                'tagline'     => $tagline,
+                'category_id' => $categoryId,
+                'price'       => $price > 0 ? $price : (float)$existing['price'],
+                'old_price'   => $oldPrice > 0 ? $oldPrice : null,
+                'image'       => $imagePath,
+                'badge'       => trim((string)$this->request->getPost('badge')) ?: null,
+                'description' => trim((string)$this->request->getPost('description')) ?: $tagline,
+                'features'    => json_encode($features, JSON_UNESCAPED_UNICODE),
+                'specs'       => json_encode($specs, JSON_UNESCAPED_UNICODE),
+                'stock'       => max(0, (int)$this->request->getPost('stock')),
+                'featured'    => $this->request->getPost('featured') ? 1 : 0,
+            ]);
             return redirect()->to(base_url('admin/produtos'))->with('success', 'Produto "' . esc($name) . '" atualizado com sucesso!');
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', 'Erro ao atualizar no banco de dados: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Delete product from database
-     */
+    /** DELETE */
     public function deleteProduct()
     {
         if ($redirect = $this->checkAdminAccess()) return $redirect;
 
         $productId = (int)$this->request->getPost('product_id');
-        if ($productId <= 0) {
-            return redirect()->back()->with('error', 'ID de produto inválido.');
+        $product   = $productId > 0 ? $this->products->findRaw($productId) : null;
+        if (!$product) {
+            return redirect()->back()->with('error', 'Produto não encontrado.');
         }
 
         try {
-            $product = $this->db->table('products')->where('id', $productId)->get()->getRowArray();
-            if ($product) {
-                // RN06: o produto é desativado, não apagado; o histórico de vendas continua
-                $this->db->table('products')->where('id', $productId)->update([
-                    'active'     => 0,
-                    'featured'   => 0,
-                    'updated_at' => date('Y-m-d H:i:s'),
-                ]);
-                return redirect()->to(base_url('admin/produtos'))->with('success', 'Produto "' . esc($product['name']) . '" removido do catálogo!');
-            }
-            return redirect()->back()->with('error', 'Produto não encontrado.');
+            $result = $this->products->removeProduct($productId);
+            $msg = $result === 'deleted'
+                ? 'Produto "' . esc($product['name']) . '" excluído do banco de dados!'
+                : 'Produto "' . esc($product['name']) . '" já tinha vendas, então foi desativado (o histórico de pedidos foi mantido).';
+            return redirect()->to(base_url('admin/produtos'))->with('success', $msg);
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', 'Erro ao excluir produto: ' . $e->getMessage());
         }
+    }
+
+    /* ---------------- auxiliares de formulário ---------------- */
+
+    /** Textarea com um item por linha -> array. */
+    protected function linesFromPost(string $field): array
+    {
+        $raw = (string)$this->request->getPost($field);
+        return array_values(array_filter(array_map('trim', explode("\n", $raw))));
+    }
+
+    /** Textarea "Chave: Valor" por linha -> array associativo. */
+    protected function specsFromPost(): array
+    {
+        $specs = [];
+        foreach ($this->linesFromPost('specs') as $line) {
+            if (strpos($line, ':') !== false) {
+                [$k, $v] = explode(':', $line, 2);
+                $specs[trim($k)] = trim($v);
+            }
+        }
+        return $specs;
+    }
+
+    /** Move a imagem enviada para public/img/uploads e devolve o caminho, ou null. */
+    protected function uploadedImage(): ?string
+    {
+        $file = $this->request->getFile('image_file');
+        if (!$file || !$file->isValid() || $file->hasMoved()) {
+            return null;
+        }
+        if (!in_array($file->getMimeType(), ['image/png', 'image/jpeg', 'image/webp', 'image/gif'], true)) {
+            return null;
+        }
+
+        $uploadDir = FCPATH . 'img/uploads/';
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0775, true);
+        }
+        $newName = $file->getRandomName();
+        $file->move($uploadDir, $newName);
+        return 'img/uploads/' . $newName;
     }
 }

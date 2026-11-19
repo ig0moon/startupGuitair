@@ -84,4 +84,27 @@ class UserModel extends Model
         unset($user['password_hash']);
         return ['success' => true, 'user' => $user];
     }
+
+    /** true se o usuário existe e tem papel de administrador no banco. */
+    public function isAdmin(int $userId): bool
+    {
+        $user = $this->select('role')->find($userId);
+        return $user !== null && $user['role'] === 'admin';
+    }
+
+    /** Lista de usuários para o painel (sem a senha). */
+    public function listForAdmin(string $orderBy = 'id'): array
+    {
+        return $this->select('id, name, email, phone, role, created_at')
+                    ->orderBy($orderBy, 'ASC')
+                    ->findAll();
+    }
+
+    public function changeRole(int $userId, string $role): bool
+    {
+        if (!in_array($role, ['user', 'admin'], true)) {
+            return false;
+        }
+        return $this->update($userId, ['role' => $role]);
+    }
 }

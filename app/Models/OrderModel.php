@@ -262,6 +262,92 @@ class OrderModel extends Model
         return $orders;
     }
 
+    /** Totais para o painel administrativo. */
+    public function adminStats(): array
+    {
+        $row = $this->db->table('orders')->selectSum('total')->get()->getRowArray();
+        return [
+            'totalOrders'  => $this->db->table('orders')->countAllResults(),
+            'totalRevenue' => (float)($row['total'] ?? 0),
+        ];
+    }
+
+    /** Todos os pedidos, do mais novo ao mais antigo, com os itens de cada um. */
+    public function listWithItems(): array
+    {
+        $orders = $this->db->table('orders')
+                           ->select('orders.*, users.name as registered_name')
+                           ->join('users', 'users.id = orders.user_id', 'left')
+                           ->orderBy('orders.id', 'DESC')
+                           ->get()
+                           ->getResultArray();
+
+        foreach ($orders as &$ord) {
+            $ord['items'] = $this->db->table('order_items')
+                                     ->where('order_id', $ord['id'])
+                                     ->get()
+                                     ->getResultArray();
+        }
+        return $orders;
+    }
+
+    public function updateStatus(int $orderId, string $status): bool
+    {
+        $valid = ['pending', 'paid', 'shipped', 'completed', 'cancelled'];
+        if (!in_array($status, $valid, true)) {
+            return false;
+        }
+        return $this->update($orderId, ['status' => $status]);
+    }
+
+    /**
+     * Itens comprados (order_items + orders + users + products), com busca
+     * por id, nome, e-mail, número do pedido ou nome do produto.
+     */
+    public function searchPurchases(string $search = ''): array
+    {
+        $builder = $this->db->table('order_items');
+        $builder->select('
+            users.id as user_id,
+            users.name as user_name,
+            users.email as user_email,
+            orders.id as order_id,
+            orders.order_number,
+            orders.customer_name,
+            orders.customer_email,
+            orders.created_at as order_date,
+            orders.status as order_status,
+            order_items.product_name,
+            order_items.price,
+            order_items.quantity,
+            order_items.subtotal,
+            products.image as product_image
+        ');
+        $builder->join('orders', 'orders.id = order_items.order_id', 'inner');
+        $builder->join('users', 'users.id = orders.user_id', 'left');
+        $builder->join('products', 'products.id = order_items.product_id', 'left');
+
+        if ($search !== '') {
+            if (is_numeric($search)) {
+                $builder->groupStart()
+                        ->where('orders.user_id', (int)$search)
+                        ->orWhere('orders.id', (int)$search)
+                        ->groupEnd();
+            } else {
+                $builder->groupStart()
+                        ->like('users.name', $search)
+                        ->orLike('users.email', $search)
+                        ->orLike('orders.customer_name', $search)
+                        ->orLike('orders.customer_email', $search)
+                        ->orLike('orders.order_number', $search)
+                        ->orLike('order_items.product_name', $search)
+                        ->groupEnd();
+            }
+        }
+
+        return $builder->orderBy('orders.id', 'DESC')->get()->getResultArray();
+    }
+
     /**
      * Get all purchases grouped by user using Query Builder
      */

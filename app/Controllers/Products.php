@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\CategoryModel;
 use App\Models\ProductModel;
 use App\Models\ReviewModel;
 
@@ -15,6 +16,7 @@ class Products extends BaseController
 
         return view('products', [
             'products'        => $products,
+            'categories'      => (new CategoryModel())->listAll(),
             'currentCategory' => $category,
             'pageTitle'       => 'GuitAIr - Conheça Nossa Linha de Instrumentos Inteligentes'
         ]);
@@ -38,6 +40,7 @@ class Products extends BaseController
             'reviews'         => $reviewModel->forProduct((int)$product['id']),
             'myReview'        => !empty($user['id']) ? $reviewModel->findByUser((int)$user['id'], (int)$product['id']) : null,
             'loggedUser'      => $user,
+            'categories'      => (new CategoryModel())->listAll(),
             'currentCategory' => $product['category'] ?? 'todos',
             'pageTitle'       => 'GuitAIr - ' . esc($product['name'])
         ]);
