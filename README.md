@@ -39,11 +39,11 @@ Projeto individual.
 |---|---|
 | Linguagem | PHP 8.2+ (orientado a objetos) |
 | Framework | CodeIgniter 4.7 (MVC) |
-| Banco de dados | MySQL 8 / MariaDB (também roda no TiDB Cloud) |
+| Banco de dados | MySQL 8 / MariaDB |
 | Acesso a dados | Models do CodeIgniter usados como DAO (Query Builder + transações) |
 | Front-end | HTML5, CSS3, JavaScript puro, Google Material Symbols |
 | Dependências | Composer |
-| Deploy (opcional) | Docker (`php:8.2-apache`) |
+| Ambiente | Docker + Docker Compose (`php:8.2-apache`, `mysql:8.0`, phpMyAdmin) |
 | Testes | PHPUnit 10 |
 
 ---
@@ -112,69 +112,73 @@ O arquivo [`schema.sql`](schema.sql) cria o banco `guitair_db` com todas as tabe
 
 ## 🚀 Instalação e execução (passo a passo)
 
-### Pré-requisitos
-* PHP **8.2+** com as extensões `intl`, `mbstring`, `mysqli` e `json`
-* [Composer](https://getcomposer.org/)
-* MySQL 8 ou MariaDB. O [Laragon](https://laragon.org/) ou o XAMPP já trazem PHP e MySQL juntos.
+Há duas formas de rodar. A **Opção 1 (Docker)** é a recomendada: um comando sobe a loja, o banco e o phpMyAdmin, sem instalar PHP nem MySQL.
 
-### 1. Clonar o repositório
+### Opção 1: Docker (recomendada)
+
+**Pré-requisito:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e aberto.
+
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/ig0moon/startupGuitair.git
+   cd startupGuitair
+   ```
+2. Suba tudo:
+   ```bash
+   docker compose up -d --build
+   ```
+   Na primeira vez demora alguns minutos (baixa as imagens e instala as dependências). O banco é criado automaticamente a partir do `schema.sql`.
+3. Acesse:
+
+   | O quê | Endereço |
+   |---|---|
+   | Loja + painel admin | **http://localhost:8090** |
+   | phpMyAdmin (ver as tabelas) | http://localhost:8081 |
+   | MySQL (HeidiSQL, DBeaver…) | `127.0.0.1`, porta `3308`, usuário `root`, senha `guitair` |
+
+4. Entre com `admin@guitair.com` / `admin123` e vá em **Admin → Categorias** e **Admin → Gestão de Produtos**.
+
+Comandos úteis:
 ```bash
-git clone https://github.com/ig0moon/startupGuitair.git
-cd startupGuitair
+docker compose down        # para tudo (os dados continuam salvos)
+docker compose down -v     # para e apaga os dados; na próxima subida o banco é recriado do zero
 ```
 
-### 2. Instalar as dependências
-```bash
-composer install
-```
+### Opção 2: PHP + MySQL instalados (XAMPP, Laragon ou similares)
 
-### 3. Criar o banco de dados
-O script [`schema.sql`](schema.sql) cria o banco `guitair_db`, as tabelas e os dados de exemplo. Escolha **uma** das opções:
+**Pré-requisitos:** PHP **8.2+** (extensões `intl`, `mbstring` e `mysqli`), [Composer](https://getcomposer.org/) e MySQL 8 ou MariaDB.
 
-**Opção A: Docker (mais simples).** Sobe o MySQL 8 já com o `schema.sql` importado e um phpMyAdmin em http://localhost:8081:
-```bash
-docker compose up -d
-```
-Nesse caso o banco fica em `127.0.0.1`, porta **3308**, usuário `root` e senha `guitair`.
+1. Clone o repositório e instale as dependências:
+   ```bash
+   git clone https://github.com/ig0moon/startupGuitair.git
+   cd startupGuitair
+   composer install
+   ```
+2. Crie o banco rodando o `schema.sql`. Ele cria o banco `guitair_db`, as tabelas e os dados de exemplo:
+   ```bash
+   mysql -u root -p < schema.sql
+   ```
+   No PowerShell, use `mysql -u root -p -e "source schema.sql"`. Também dá para abrir o arquivo no phpMyAdmin ou no HeidiSQL e executar tudo.
+3. Crie o `.env` a partir do modelo e ajuste os dados do seu MySQL:
+   ```bash
+   cp env .env
+   ```
+   ```ini
+   CI_ENVIRONMENT = development
+   app.baseURL = 'http://localhost:8080/'
 
-**Opção B: XAMPP / Laragon / MySQL instalado.** Rode o script no terminal:
-```bash
-mysql -u root -p < schema.sql
-```
-No PowerShell, use `mysql -u root -p -e "source schema.sql"`.
-Se preferir, abra o `schema.sql` no phpMyAdmin, HeidiSQL ou MySQL Workbench e execute tudo.
-
-**Opção C: TiDB Cloud (nuvem).** No console do TiDB Cloud, abra o **SQL Editor** do cluster, cole o conteúdo do `schema.sql` e execute.
-
-### 4. Configurar o `.env`
-Copie o arquivo de exemplo e ajuste os dados do seu MySQL:
-```bash
-cp env .env
-```
-```ini
-CI_ENVIRONMENT = development
-app.baseURL = 'http://localhost:8080/'
-
-database.default.hostname = localhost
-database.default.database = guitair_db
-database.default.username = root
-database.default.password = SUA_SENHA
-database.default.DBDriver = MySQLi
-database.default.port = 3306
-```
-Com a Opção A (Docker), use `hostname = 127.0.0.1`, `port = 3308` e `password = guitair`.
-
-### 5. Rodar o servidor
-```bash
-php spark serve
-```
-Acesse **http://localhost:8080**. Para abrir o painel administrativo, entre com `admin@guitair.com` / `admin123` e vá em **Admin → Categorias / Gestão de Produtos**.
-
-### (Opcional) Rodar com Docker
-```bash
-docker build -t guitair .
-docker run -p 8080:80 -e DB_HOST=host.docker.internal -e DB_USER=root -e DB_PASS=SUA_SENHA -e DB_NAME=guitair_db guitair
-```
+   database.default.hostname = localhost
+   database.default.database = guitair_db
+   database.default.username = root
+   database.default.password = SUA_SENHA
+   database.default.DBDriver = MySQLi
+   database.default.port = 3306
+   ```
+4. Rode o servidor:
+   ```bash
+   php spark serve
+   ```
+   Acesse **http://localhost:8080** e entre com `admin@guitair.com` / `admin123`.
 
 ---
 

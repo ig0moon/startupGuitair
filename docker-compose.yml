@@ -1,10 +1,32 @@
-# Banco de dados local do GuitAIr (somente para desenvolvimento).
+# GuitAIr: ambiente local completo (somente para desenvolvimento / avaliação).
 #
-#   docker compose up -d        -> sobe MySQL 8 (porta 3308) + phpMyAdmin (http://localhost:8081)
-#   docker compose down -v      -> derruba e APAGA os dados (na próxima subida o schema.sql é importado de novo)
+#   docker compose up -d --build   -> sobe tudo:
+#        • Loja + painel admin ......... http://localhost:8090
+#        • phpMyAdmin .................. http://localhost:8081
+#        • MySQL 8 ..................... 127.0.0.1:3308  (root / guitair)
+#   docker compose down            -> para tudo (os dados continuam salvos)
+#   docker compose down -v         -> para e APAGA os dados (na próxima subida o schema.sql é importado de novo)
 #
 # Na primeira subida o MySQL importa automaticamente o schema.sql.
 services:
+  app:
+    build: .
+    container_name: guitair-app
+    restart: unless-stopped
+    environment:
+      CI_ENVIRONMENT: production
+      app_baseURL: http://localhost:8090/
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: guitair
+      DB_NAME: guitair_db
+    ports:
+      - "8090:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: mysql:8.0
     container_name: guitair-mysql
