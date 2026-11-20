@@ -126,3 +126,9 @@ _modules/*
 /results/
 /phpunit.xml
 .env.bak*
+
+# Roteiros e pedidos de vídeo (ficam fora do repositório)
+docs/ROTEIRO*
+docs/PEDIDO*
+*ROTEIRO_VIDEO*
+*PEDIDO_VIDEO*

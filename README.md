@@ -210,7 +210,7 @@ O autor usou ferramentas de IA (Claude / Claude Code) como apoio no desenvolvime
 ---
 
 ## 🎬 Vídeo
-Roteiro do vídeo de apresentação: [`docs/ROTEIRO_VIDEO.md`](docs/ROTEIRO_VIDEO.md)
+Vídeo de apresentação do projeto: _link do YouTube em breve_
 
 <!-- TODO: colar aqui o link do vídeo no YouTube -->
 
