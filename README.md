@@ -18,7 +18,6 @@ Este repositório tem a **loja online** completa e um **painel administrativo**.
 |---|---|
 | ![Categorias](docs/screenshots/admin-categorias.png) | ![Produtos admin](docs/screenshots/admin-produtos.png) |
 
-<!-- TODO: gravar um GIF do CRUD e salvar em docs/screenshots/crud.gif -->
 ![Demonstração do CRUD](docs/screenshots/crud.gif)
 
 ---
@@ -204,8 +203,9 @@ O autor usou ferramentas de IA (Claude / Claude Code) como apoio no desenvolvime
 * **Script do banco:** a IA ajudou a montar o `schema.sql` completo, com chaves estrangeiras e dados iniciais.
 * **Refatoração e tratamento de erros:** a IA sugeriu o checkout com transação, as mensagens de erro e as validações.
 * **Documentação:** a IA ajudou na escrita deste README.
+* **Vídeo de apresentação:** roteiro, edição, animações e narração (voz gerada por IA) foram feitos com IA, a partir do sistema rodando e do código deste repositório.
 
-**Feito pelo autor:** a ideia da startup GuitAIr, a identidade visual, as telas da loja, o fluxo de compra, as regras de negócio (cupons, frete, estoque, avaliações), os testes manuais e a gravação do vídeo.
+**Feito pelo autor:** a ideia da startup GuitAIr, a identidade visual, as telas da loja, o fluxo de compra, as regras de negócio (cupons, frete, estoque, avaliações) e os testes manuais.
 
 ---
 
